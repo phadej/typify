@@ -88,7 +88,7 @@ Function types are difficult to check. Given a function object, only you can tel
 To be more precise, you can decorate your function with *function type* signature to verify parameters' and result's types, but the check will occur only when function is executed ie. run-time.
 
 ```javascript
-var add = typify.decorate("add :: number -> number -> number", function (a, b) {
+var add = typify("add :: number -> number -> number", function (a, b) {
     return a + b;
 });
 
