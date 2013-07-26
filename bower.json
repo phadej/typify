@@ -1,0 +1,16 @@
+{
+  "name": "typify",
+  "description": "Runtime type-checking for JavaScript.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/phadej/typify",
+  "author": "Oleg Grenrus <oleg.grenrus@iki.fi>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/phadej/typify.git"
+  },
+  "main": "lib/typify.js",
+  "keywords": [
+    "type",
+    "checking"
+  ]
+}
