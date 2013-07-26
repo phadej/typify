@@ -11,7 +11,7 @@ Install the module with: `npm install typify`
 var typify = require("typify").typify;
 
 /*
- * `sum` function takes either two numbers or two strings as a parameters,
+ * `sum` function takes either two numbers or two strings as a parameter,
  * and returns a number or a string respectively.
  */
 var add = typify("sum :: a : number|string => a -> a -> a", function (a, b) {
@@ -19,23 +19,23 @@ var add = typify("sum :: a : number|string => a -> a -> a", function (a, b) {
 });
 
 /*
- * `toArray` function takes either array of numbers or single number,
- * and returns a array of numbers.
+ * `toArray` function takes either an array of numbers or a single number,
+ * and returns an array of numbers.
  *
- * We could write more general, polymorphic function with type signature
+ * We could write a more general, polymorphic function with type signature
  * `toArray :: a : *, (array a)|a -> array a`, where `*` means _any type_.
  *
- * Unfortunately any type `*` is seriosly any. 
- * Types as *typify* understandes them, are more like Java's interfaces or Haskell's typeclasses.
- * Of course, we can iterate throught them all, but we cannot deduce most principal type (because it doesn't exist).
- * So eg. function signature `id :: a : *, a -> a` behaves similarly as `id :: * -> *`, which isn't strict enough.
+ * Unfortunately any type `*` is seriously any. 
+ * Types as *typify* understands them, are more like Java's interfaces or Haskell's typeclasses.
+ * Of course, we can iterate through them all, but we cannot deduce the most principal type (because it doesn't exist).
+ * So eg. function signature `id :: a : *, a -> a` behaves similarly to `id :: * -> *`, which isn't strict enough.
  */
 var toNumberArray = typify("toNumberArray :: (array number)|number -> array number", function (a) {
     return Array.isArray(a) ? a : [a];
 });
 
 /*
- * `myParseInt` takes string and an optional number (radix) and returns number.
+ * `myParseInt` takes a string and an optional number (radix) and returns a number.
  */
 var myParseInt = typify("myParseInt :: string -> number? -> number", function (n, radix) {
     return parseInt(n, radix || 10)
