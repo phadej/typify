@@ -8,7 +8,7 @@ Install the module with: `npm install typify`
 ## Synopsis
 
 ```javascript
-var typify = require("typify").typify;
+var typify = require("typify");
 
 /*
  * `sum` function takes either two numbers or two strings as a parameter,
