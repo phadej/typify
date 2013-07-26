@@ -1,6 +1,6 @@
 {
   "name": "typify",
-  "description": "Runtime type-checking.",
+  "description": "Runtime type-checking for JavaScript.",
   "version": "0.1.0",
   "homepage": "https://github.com/phadej/typify",
   "author": {
@@ -34,5 +34,8 @@
     "grunt-contrib-jasmine": "~0.5.1",
     "grunt": "~0.4.1"
   },
-  "keywords": []
+  "keywords": [
+    "type",
+    "checking"
+  ]
 }
