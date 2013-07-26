@@ -62,6 +62,7 @@ typify.check('number', 'foobar'); // => false
 ```
 
 There are few predefined checkable types:
+
 - `number`
 - `string`
 - `boolean`
