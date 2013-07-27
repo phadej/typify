@@ -79,8 +79,9 @@ There are few predefined checkable types:
 
 #### Formal syntax of checkable type declaration:
 
-- *checkable type* σ ::= σ_alt
-    - σ_alt ::= σ_poly (`|` σ_poly)*
+- *checkable type* σ ::= σ_or
+    - σ_or ::= σ_and (`|` σ_and)*
+    - σ_and ::= σ_poly (`&` σ_poly)*
     - σ_poly ::= *typename* σ_opt+ | σ_opt
     - σ_opt = σ_term | σ_term `?`
     - σ_term ::= `*` | α | *typename* | `(` σ_alt `)`

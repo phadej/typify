@@ -115,6 +115,29 @@
     });
   });
 
+  describe("intersection types", function () {
+    typify.record("duck", {
+      quack: "function",
+    });
+
+    typify.record("mammal", {
+      milk: "function",
+    });
+
+    it("are useful when ducktyping", function () {
+      var platypus = {
+        quack: id,
+        milk: id,
+      };
+
+      expect(typify.check("duck", platypus)).toBeTruthy();
+      expect(typify.check("mammal", platypus)).toBeTruthy();
+      expect(typify.check("mammal&duck", platypus)).toBeTruthy();
+
+      expect(typify.check("number&string", 1)).toBeFalsy();
+    });
+  });
+
   describe("records - record()", function () {
     var typ;
 
