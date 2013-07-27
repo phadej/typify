@@ -2,6 +2,9 @@
 (function () {
   "use strict";
 
+  // identity
+  function id(x) { return x; }
+
   // safe executor
   Function.prototype.safeapply = function safe(args) {
     try {
@@ -116,6 +119,30 @@
   });
 
   describe("function types - typify()", function () {
+    describe("context", function () {
+      it("polytypes don't need braces", function () {
+        var f = typify("a : array * => a -> a", id);
+        expect(f(["foo"])).toEqual(["foo"]);
+      });
+
+      it("optional types don't need braces", function () {
+        var f = typify("a : number? => a -> a", id);
+        expect(f(undefined)).toEqual(undefined);
+      });
+
+      it("alternative types need braces", function () {
+        var f = typify("a : number|string => a -> a", id);
+        expect(f(1)).toEqual(1);
+        expect(f("foo")).toEqual("foo");
+
+        var g = typify("a : (number|string) => a -> a", function() { return "const"; });
+        expect(g(1)).toBe("const");
+        expect(g("foo")).toBe("const");
+
+        var h = typify("a : number|string => a -> a", function() { return "const"; });
+        expect(function () { return h(1); }).toThrow();
+      });
+    });
 
     describe("rest parameters", function () {
       it("accepts any parameters", function () {

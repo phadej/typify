@@ -121,7 +121,7 @@ typify.record("person", {
 - *function type* λ ::= ν μ | ν Γ (σ `->`)* ρ σ
 - *action* μ ::= `->` τ
 - *context* Γ ::= α `:` Σ (`,` α `:` Σ)* `=>` | ε
-- *typeset* Σ ::= σ_opt (`|` σ_opt)*
+- *typeset* Σ ::= σ_poly (`|` σ_poly)*
 - *rest parameters* ρ ::= σ `...` `->` | `...` `->` | ε
 - *function name* ν ::= *identifier* `::` | ε
 
