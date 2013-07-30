@@ -132,6 +132,8 @@ typify.record("person", {
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
+- You can use `grunt jasmine-build` to generate `_SpecRunner.html` to run tests in your browser of choice.
+
 ## Release History
 
 - 0.1.1
