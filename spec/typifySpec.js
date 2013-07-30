@@ -86,6 +86,35 @@
     ]);
   });
 
+  describe("separate instances - create()", function () {
+    it("don't share types", function () {
+      var typ1 = typify.create();
+      var typ2 = typify.create();
+
+      typ1.type("true", function () { return true; });
+      typ2.type("t", function () { return true; });
+
+      expect(typ1.check("true", 1)).toBeTruthy();
+      expect(typ2.check("t", 1)).toBeTruthy();
+
+      expect(function () {
+        typ1.check("t", 1);
+      }).toThrow();
+
+      expect(function () {
+        typ2.check("true", 1);
+      }).toThrow();
+
+      expect(function () {
+        typify.check("t", 1);
+      }).toThrow();
+
+      expect(function () {
+        typify.check("true", 1);
+      }).toThrow();
+    });
+  });
+
   describe("records - record()", function () {
     typify.record("person", {
       name: "string",
