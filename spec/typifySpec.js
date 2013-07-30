@@ -1,4 +1,4 @@
-/* global typify, describe, it, expect */
+/* global typify, describe, it, expect, beforeEach */
 (function () {
   "use strict";
 
@@ -116,34 +116,39 @@
   });
 
   describe("records - record()", function () {
-    typify.record("person", {
-      name: "string",
-      age: "number",
+    var typ;
+
+    beforeEach(function () {
+      typ = typify.create();
+      typ.record("person", {
+        name: "string",
+        age: "number",
+      });
     });
 
     it("adds type definition which is falsy for non-objects", function () {
-      expect(typify.check("person", undefined)).toBeFalsy();
-      expect(typify.check("person", null)).toBeFalsy();
-      expect(typify.check("person", true)).toBeFalsy();
-      expect(typify.check("person", false)).toBeFalsy();
-      expect(typify.check("person", 0)).toBeFalsy();
-      expect(typify.check("person", 1)).toBeFalsy();
-      expect(typify.check("person", "")).toBeFalsy();
-      expect(typify.check("person", "foobar")).toBeFalsy();
+      expect(typ.check("person", undefined)).toBeFalsy();
+      expect(typ.check("person", null)).toBeFalsy();
+      expect(typ.check("person", true)).toBeFalsy();
+      expect(typ.check("person", false)).toBeFalsy();
+      expect(typ.check("person", 0)).toBeFalsy();
+      expect(typ.check("person", 1)).toBeFalsy();
+      expect(typ.check("person", "")).toBeFalsy();
+      expect(typ.check("person", "foobar")).toBeFalsy();
     });
 
     it("is falsy for objects with missing properties", function () {
-      expect(typify.check("person", {})).toBeFalsy();
-      expect(typify.check("person", { age: 10 })).toBeFalsy();
-      expect(typify.check("person", { name: "foo" })).toBeFalsy();
+      expect(typ.check("person", {})).toBeFalsy();
+      expect(typ.check("person", { age: 10 })).toBeFalsy();
+      expect(typ.check("person", { name: "foo" })).toBeFalsy();
     });
 
     it("is truthy for objects with all properties", function () {
-      expect(typify.check("person", { age: 10, name: "foo" })).toBeTruthy();
+      expect(typ.check("person", { age: 10, name: "foo" })).toBeTruthy();
     });
 
     it("is truthy for objects with extra properties", function () {
-      expect(typify.check("person", { age: 10, name: "foo", height: 175 })).toBeTruthy();
+      expect(typ.check("person", { age: 10, name: "foo", height: 175 })).toBeTruthy();
     });
   });
 
