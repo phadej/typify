@@ -120,6 +120,23 @@ typify.record("person", {
 });
 ```
 
+### Hygiene usage
+
+If you don't want to use global type database, you can create your own instance of *typify*:
+
+```js
+// In browser
+var myTypify = typify.create();
+
+// or alternatively, using "let-binding":
+(function (typify) {
+    // use typify as it would be global
+}(typify.create()));
+
+// In node
+var typify = require("typify").create();
+```
+
 #### Formal syntax of function type declaration:
 
 - *function type* λ ::= ν μ | ν Γ (σ `->`)* ρ σ
@@ -131,6 +148,8 @@ typify.record("person", {
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
+
+- You can use `grunt jasmine-build` to generate `_SpecRunner.html` to run tests in your browser of choice.
 
 ## Release History
 
