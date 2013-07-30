@@ -12,5 +12,14 @@
   "keywords": [
     "type",
     "checking"
+  ],
+  "ignore": [
+    ".gitignore",
+    ".jshint.rc",
+    ".travis.yml",
+    "node_modules",
+    "Gruntfile.js",
+    "package.json",
+    "spec"
   ]
 }
