@@ -8,6 +8,10 @@ Install the module with: `npm install typify`
 ## Synopsis
 
 ```javascript
+// Browser
+// <script src="typify.js" type="text/javascript"></script>
+
+// Node
 var typify = require("typify");
 
 /*
