@@ -120,6 +120,23 @@ typify.record("person", {
 });
 ```
 
+### Hygiene usage
+
+If you don't want to use global type database, you can create your own instance of *typify*:
+
+```js
+// In browser
+var myTypify = typify.create();
+
+// or alternatively, using "let-binding":
+(function (typify) {
+    // use typify as it would be global
+}(typify.create()));
+
+// In node
+var typify = require("typify").create();
+```
+
 #### Formal syntax of function type declaration:
 
 - *function type* λ ::= ν μ | ν Γ (σ `->`)* ρ σ
