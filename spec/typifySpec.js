@@ -1,4 +1,4 @@
-/* global typify, describe, it, expect */
+/* global typify, describe, it, expect, beforeEach */
 (function () {
   "use strict";
 
@@ -86,35 +86,69 @@
     ]);
   });
 
+  describe("separate instances - create()", function () {
+    it("don't share types", function () {
+      var typ1 = typify.create();
+      var typ2 = typify.create();
+
+      typ1.type("true", function () { return true; });
+      typ2.type("t", function () { return true; });
+
+      expect(typ1.check("true", 1)).toBeTruthy();
+      expect(typ2.check("t", 1)).toBeTruthy();
+
+      expect(function () {
+        typ1.check("t", 1);
+      }).toThrow();
+
+      expect(function () {
+        typ2.check("true", 1);
+      }).toThrow();
+
+      expect(function () {
+        typify.check("t", 1);
+      }).toThrow();
+
+      expect(function () {
+        typify.check("true", 1);
+      }).toThrow();
+    });
+  });
+
   describe("records - record()", function () {
-    typify.record("person", {
-      name: "string",
-      age: "number",
+    var typ;
+
+    beforeEach(function () {
+      typ = typify.create();
+      typ.record("person", {
+        name: "string",
+        age: "number",
+      });
     });
 
     it("adds type definition which is falsy for non-objects", function () {
-      expect(typify.check("person", undefined)).toBeFalsy();
-      expect(typify.check("person", null)).toBeFalsy();
-      expect(typify.check("person", true)).toBeFalsy();
-      expect(typify.check("person", false)).toBeFalsy();
-      expect(typify.check("person", 0)).toBeFalsy();
-      expect(typify.check("person", 1)).toBeFalsy();
-      expect(typify.check("person", "")).toBeFalsy();
-      expect(typify.check("person", "foobar")).toBeFalsy();
+      expect(typ.check("person", undefined)).toBeFalsy();
+      expect(typ.check("person", null)).toBeFalsy();
+      expect(typ.check("person", true)).toBeFalsy();
+      expect(typ.check("person", false)).toBeFalsy();
+      expect(typ.check("person", 0)).toBeFalsy();
+      expect(typ.check("person", 1)).toBeFalsy();
+      expect(typ.check("person", "")).toBeFalsy();
+      expect(typ.check("person", "foobar")).toBeFalsy();
     });
 
     it("is falsy for objects with missing properties", function () {
-      expect(typify.check("person", {})).toBeFalsy();
-      expect(typify.check("person", { age: 10 })).toBeFalsy();
-      expect(typify.check("person", { name: "foo" })).toBeFalsy();
+      expect(typ.check("person", {})).toBeFalsy();
+      expect(typ.check("person", { age: 10 })).toBeFalsy();
+      expect(typ.check("person", { name: "foo" })).toBeFalsy();
     });
 
     it("is truthy for objects with all properties", function () {
-      expect(typify.check("person", { age: 10, name: "foo" })).toBeTruthy();
+      expect(typ.check("person", { age: 10, name: "foo" })).toBeTruthy();
     });
 
     it("is truthy for objects with extra properties", function () {
-      expect(typify.check("person", { age: 10, name: "foo", height: 175 })).toBeTruthy();
+      expect(typ.check("person", { age: 10, name: "foo", height: 175 })).toBeTruthy();
     });
   });
 
