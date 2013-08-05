@@ -121,6 +121,16 @@ typify.record("person", {
 });
 ```
 
+Record types may be recursive:
+
+```javascript
+typ.record("bst", {
+    left: "bst?",
+    right: "bst?",
+});
+```
+
+
 ### Hygiene usage
 
 If you don't want to use global type database, you can create your own instance of *typify*:
