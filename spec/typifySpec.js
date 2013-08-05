@@ -138,6 +138,30 @@
     });
   });
 
+  describe("aliases - alias()", function () {
+    var typ;
+
+    beforeEach(function () {
+      typ = typify.create();
+    });
+
+    it("could be use to reduce repetition", function () {
+      typ.alias("numstr", "number|string");
+
+      expect(typ.check("numstr", 1)).toBeTruthy();
+      expect(typ.check("numstr", "foo")).toBeTruthy();
+      expect(typ.check("numstr", true)).toBeFalsy();
+    });
+
+    it("can be recursive", function () {
+      typ.alias("rarray", "array rarray");
+
+      expect(typ.check("rarray", [])).toBeTruthy();
+      expect(typ.check("rarray", 1)).toBeFalsy();
+      expect(typ.check("rarray", [[], [], [[[[[[[[]]]]]], []]]])).toBeTruthy();
+    });
+  });
+
   describe("records - record()", function () {
     var typ;
 
