@@ -178,6 +178,12 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+- 0.2.0
+    - Recursive record types
+    - Recursive aliases
+    - Intersection types
+    - Hygiene type environments
+
 - 0.1.1
     - Record type
     - Fixed typos in README.md
