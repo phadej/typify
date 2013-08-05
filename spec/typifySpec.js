@@ -175,6 +175,34 @@
     });
   });
 
+  describe("recursive records", function () {
+    var typ;
+
+    beforeEach(function () {
+      typ = typify.create();
+    });
+
+    it("you can have", function () {
+      typ.record("bst", {
+        left: "bst?",
+        right: "bst?",
+      });
+
+      var tree = {
+        left: {
+          left: { value: 1 },
+          right: { value: 2 },
+        },
+        value: 3,
+        right: {
+          value: 4,
+        },
+      };
+
+      expect(typ.check("bst", tree)).toBeTruthy();
+    });
+  });
+
   describe("function types - typify()", function () {
     describe("context", function () {
       it("polytypes don't need braces", function () {
