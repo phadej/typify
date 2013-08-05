@@ -55,6 +55,15 @@ var foo = typify("foo :: number -> number.. -> number", function (a) {
 
 ## Documentation
 
+### API
+
+- `typify(functionSpec, fun)` - decorate function with run-time type check
+- `typify.create()` - create new typify environment
+- `typify.type(typename, checkFun)` - add new type with user-supplied existence check
+- `typify.record(typename, recordspec)` - add new record type
+- `typify.alias(typename, typespec)` - give name to the compound type
+- `typify.check(typename, value) -> bool` - check membership of value in the type
+
 ### Checkable type
 
 *Checkable* means, that given an object you can check whether an object is or isn't of the particular type.
