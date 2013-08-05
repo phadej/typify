@@ -102,6 +102,15 @@ console.log(add(1, 2)); // ok
 console.log(add("foo", "bar")); // throws TypeError
 ```
 
+#### Formal syntax of function type declaration:
+
+- *function type* λ ::= ν μ | ν Γ (σ `->`)* ρ σ
+- *action* μ ::= `->` τ
+- *context* Γ ::= α `:` Σ (`,` α `:` Σ)* `=>` | ε
+- *typeset* Σ ::= σ_poly (`|` σ_poly)*
+- *rest parameters* ρ ::= σ `...` `->` | `...` `->` | ε
+- *function name* ν ::= *identifier* `::` | ε
+
 ### New types
 
 New types can be added with `typify.type` method:
@@ -136,7 +145,6 @@ typ.record("bst", {
 });
 ```
 
-
 ### Hygiene usage
 
 If you don't want to use global type database, you can create your own instance of *typify*:
@@ -153,15 +161,6 @@ var myTypify = typify.create();
 // In node
 var typify = require("typify").create();
 ```
-
-#### Formal syntax of function type declaration:
-
-- *function type* λ ::= ν μ | ν Γ (σ `->`)* ρ σ
-- *action* μ ::= `->` τ
-- *context* Γ ::= α `:` Σ (`,` α `:` Σ)* `=>` | ε
-- *typeset* Σ ::= σ_poly (`|` σ_poly)*
-- *rest parameters* ρ ::= σ `...` `->` | `...` `->` | ε
-- *function name* ν ::= *identifier* `::` | ε
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
