@@ -112,6 +112,12 @@ typify.type("char", function(n) {
 });
 ```
 
+You can give names to (recursive) compound types with `typify.alias`:
+```javascript
+typify.alias("numstr", "number|string"); // numbers or strings
+typify.alias("rarray", "array rarray"); // arrays of itself, eg [[[[[[]]]]]
+```
+
 Also you can define *record* types with `typify.record`:
 
 ```javascript
