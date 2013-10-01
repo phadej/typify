@@ -192,3 +192,16 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## License
 Copyright (c) 2013 Oleg Grenrus. Licensed under the BSD3 license.
+
+## Related work
+
+### Javascript
+
+- [rho-contracts](https://github.com/sefaira/rho-contracts.js)
+- [ducktype](https://github.com/josdejong/ducktype)
+- [type-check](https://github.com/gkz/type-check)
+
+### Others
+
+- [Racket - Contracts for higher-order functions](http://dl.acm.org/citation.cfm?id=581484)
+- [Typed Clojure](https://github.com/clojure/core.typed)
