@@ -62,7 +62,7 @@ var foo = typify("foo :: number -> number.. -> number", function (a) {
 - `typify.type(typename, checkFun)` - add new type with user-supplied existence check
 - `typify.record(typename, recordspec)` - add new record type
 - `typify.alias(typename, typespec)` - give name to the compound type
-- `typify.check(typename, value) -> bool` - check membership of value in the type
+- `typify.check(typename, value) -> bool` - check membership of value in the type. `check` is [autoCurried](http://fitzgen.github.io/wu.js/#wu-autocurry)
 
 ### Checkable type
 

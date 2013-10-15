@@ -164,6 +164,7 @@
 
   describe("records - record()", function () {
     var typ;
+    var isPerson;
 
     beforeEach(function () {
       typ = typify.create();
@@ -171,31 +172,32 @@
         name: "string",
         age: "number",
       });
+      isPerson = typ.check("person");
     });
 
     it("adds type definition which is falsy for non-objects", function () {
-      expect(typ.check("person", undefined)).toBeFalsy();
-      expect(typ.check("person", null)).toBeFalsy();
-      expect(typ.check("person", true)).toBeFalsy();
-      expect(typ.check("person", false)).toBeFalsy();
-      expect(typ.check("person", 0)).toBeFalsy();
-      expect(typ.check("person", 1)).toBeFalsy();
-      expect(typ.check("person", "")).toBeFalsy();
-      expect(typ.check("person", "foobar")).toBeFalsy();
+      expect(isPerson(undefined)).toBeFalsy();
+      expect(isPerson(null)).toBeFalsy();
+      expect(isPerson(true)).toBeFalsy();
+      expect(isPerson(false)).toBeFalsy();
+      expect(isPerson(0)).toBeFalsy();
+      expect(isPerson(1)).toBeFalsy();
+      expect(isPerson("")).toBeFalsy();
+      expect(isPerson("foobar")).toBeFalsy();
     });
 
     it("is falsy for objects with missing properties", function () {
-      expect(typ.check("person", {})).toBeFalsy();
-      expect(typ.check("person", { age: 10 })).toBeFalsy();
-      expect(typ.check("person", { name: "foo" })).toBeFalsy();
+      expect(isPerson({})).toBeFalsy();
+      expect(isPerson({ age: 10 })).toBeFalsy();
+      expect(isPerson({ name: "foo" })).toBeFalsy();
     });
 
     it("is truthy for objects with all properties", function () {
-      expect(typ.check("person", { age: 10, name: "foo" })).toBeTruthy();
+      expect(isPerson({ age: 10, name: "foo" })).toBeTruthy();
     });
 
     it("is truthy for objects with extra properties", function () {
-      expect(typ.check("person", { age: 10, name: "foo", height: 175 })).toBeTruthy();
+      expect(isPerson({ age: 10, name: "foo", height: 175 })).toBeTruthy();
     });
   });
 
