@@ -77,6 +77,11 @@ typify.check('number', 'foobar'); // => false
 There are few predefined checkable types:
 
 - `number`
+- `integer`
+- `nat`: non-negative integer
+- `positive` _x_
+- `nonnegative` _x_
+- `finite` _x_
 - `string`
 - `boolean`
 - `null`
