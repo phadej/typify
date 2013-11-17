@@ -10,5 +10,9 @@ describe("error cases", function () {
     assert.throws(function () {
       typify.check("#foo", 1);
     });
+
+    assert.throws(function () {
+      typify.check("foo??", 1);
+    });
   });
 });
