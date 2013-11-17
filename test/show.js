@@ -71,7 +71,7 @@ function arbitraryCheckable(size) {
     switch (type) {
       case 0: return cons.any;
       case 1: return cons.variable(idents[random(0, idents.length - 1)]);
-      case 2: return cons.alt(arr)
+      case 2: return cons.alt(arr);
       case 3: return cons.and(arr);
       case 4: return cons.poly(idents[random(0, idents.length - 1)], arr);
       case 5: return cons.opt(arbitraryCheckable(size - 1));
