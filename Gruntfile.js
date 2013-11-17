@@ -4,14 +4,14 @@
 module.exports = function(grunt) {
   // Project configuration.
   grunt.initConfig({
-    jasmine: {
-      typify: {
-        src: 'lib/**/*.js',
-        options: {
-          specs: 'spec/*Spec.js',
-          helpers: 'spec/*Helper.js'
-        }
-      }
+    simplemocha: {
+      options: {
+        timeout: 3000,
+        ui: 'bdd',
+        reporter: 'spec',
+      },
+
+      all: { src: 'test/**/*.js' }
     },
     jshint: {
       options: {
@@ -45,10 +45,9 @@ module.exports = function(grunt) {
   // Tasks
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-simple-mocha');
 
   // Default task.
   grunt.registerTask('default', ['jshint']);
-  grunt.registerTask('test', ['jshint', 'jasmine']);
-  grunt.registerTask('jasmine-build', ['jasmine:typify:build']);
+  grunt.registerTask('test', ['jshint', 'simplemocha']);
 };

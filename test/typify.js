@@ -1,6 +1,10 @@
-/* global typify, describe, it, expect, beforeEach */
+/* jshint node:true */
+/* global describe, it, beforeEach */
 (function () {
   "use strict";
+
+  var typify = require("../lib/typify.js");
+  var assert = require("assert");
 
   // identity
   function id(x) { return x; }
@@ -21,7 +25,7 @@
       var ret = v.slice(-1)[0];
 
       it(fname + "(" + params.map(JSON.stringify).join(", ") + ") == " + (ret === "_|_" ? ret : JSON.stringify(ret)), function() {
-        expect(f.safeapply(params)).toEqual(ret);
+        assert.deepEqual(f.safeapply(params), ret);
       });
     });
   }
@@ -94,24 +98,24 @@
       typ1.type("true", function () { return true; });
       typ2.type("t", function () { return true; });
 
-      expect(typ1.check("true", 1)).toBeTruthy();
-      expect(typ2.check("t", 1)).toBeTruthy();
+      assert(typ1.check("true", 1));
+      assert(typ2.check("t", 1));
 
-      expect(function () {
+      assert.throws(function () {
         typ1.check("t", 1);
-      }).toThrow();
+      });
 
-      expect(function () {
+      assert.throws(function () {
         typ2.check("true", 1);
-      }).toThrow();
+      });
 
-      expect(function () {
+      assert.throws(function () {
         typify.check("t", 1);
-      }).toThrow();
+      });
 
-      expect(function () {
+      assert.throws(function () {
         typify.check("true", 1);
-      }).toThrow();
+      });
     });
   });
 
@@ -130,11 +134,11 @@
         milk: id,
       };
 
-      expect(typify.check("duck", platypus)).toBeTruthy();
-      expect(typify.check("mammal", platypus)).toBeTruthy();
-      expect(typify.check("mammal&duck", platypus)).toBeTruthy();
+      assert(typify.check("duck", platypus));
+      assert(typify.check("mammal", platypus));
+      assert(typify.check("mammal&duck", platypus));
 
-      expect(typify.check("number&string", 1)).toBeFalsy();
+      assert(!typify.check("number&string", 1));
     });
   });
 
@@ -148,17 +152,17 @@
     it("could be use to reduce repetition", function () {
       typ.alias("numstr", "number|string");
 
-      expect(typ.check("numstr", 1)).toBeTruthy();
-      expect(typ.check("numstr", "foo")).toBeTruthy();
-      expect(typ.check("numstr", true)).toBeFalsy();
+      assert(typ.check("numstr", 1));
+      assert(typ.check("numstr", "foo"));
+      assert(!typ.check("numstr", true));
     });
 
     it("can be recursive", function () {
       typ.alias("rarray", "array rarray");
 
-      expect(typ.check("rarray", [])).toBeTruthy();
-      expect(typ.check("rarray", 1)).toBeFalsy();
-      expect(typ.check("rarray", [[], [], [[[[[[[[]]]]]], []]]])).toBeTruthy();
+      assert(typ.check("rarray", []));
+      assert(!typ.check("rarray", 1));
+      assert(typ.check("rarray", [[], [], [[[[[[[[]]]]]], []]]]));
     });
   });
 
@@ -176,28 +180,28 @@
     });
 
     it("adds type definition which is falsy for non-objects", function () {
-      expect(isPerson(undefined)).toBeFalsy();
-      expect(isPerson(null)).toBeFalsy();
-      expect(isPerson(true)).toBeFalsy();
-      expect(isPerson(false)).toBeFalsy();
-      expect(isPerson(0)).toBeFalsy();
-      expect(isPerson(1)).toBeFalsy();
-      expect(isPerson("")).toBeFalsy();
-      expect(isPerson("foobar")).toBeFalsy();
+      assert(!isPerson(undefined));
+      assert(!isPerson(null));
+      assert(!isPerson(true));
+      assert(!isPerson(false));
+      assert(!isPerson(0));
+      assert(!isPerson(1));
+      assert(!isPerson(""));
+      assert(!isPerson("foobar"));
     });
 
     it("is falsy for objects with missing properties", function () {
-      expect(isPerson({})).toBeFalsy();
-      expect(isPerson({ age: 10 })).toBeFalsy();
-      expect(isPerson({ name: "foo" })).toBeFalsy();
+      assert(!isPerson({}));
+      assert(!isPerson({ age: 10 }));
+      assert(!isPerson({ name: "foo" }));
     });
 
     it("is truthy for objects with all properties", function () {
-      expect(isPerson({ age: 10, name: "foo" })).toBeTruthy();
+      assert(isPerson({ age: 10, name: "foo" }));
     });
 
     it("is truthy for objects with extra properties", function () {
-      expect(isPerson({ age: 10, name: "foo", height: 175 })).toBeTruthy();
+      assert(isPerson({ age: 10, name: "foo", height: 175 }));
     });
   });
 
@@ -225,7 +229,7 @@
         },
       };
 
-      expect(typ.check("bst", tree)).toBeTruthy();
+      assert(typ.check("bst", tree));
     });
   });
 
@@ -233,25 +237,27 @@
     describe("context", function () {
       it("polytypes don't need braces", function () {
         var f = typify("a : array * => a -> a", id);
-        expect(f(["foo"])).toEqual(["foo"]);
+        assert.deepEqual(f(["foo"]), ["foo"]);
       });
 
       it("optional types don't need braces", function () {
         var f = typify("a : number? => a -> a", id);
-        expect(f(undefined)).toEqual(undefined);
+        assert(f(undefined) === undefined);
       });
 
       it("alternative types need braces", function () {
         var f = typify("a : number|string => a -> a", id);
-        expect(f(1)).toEqual(1);
-        expect(f("foo")).toEqual("foo");
+        assert(f(1) === 1);
+        assert(f("foo") === "foo");
 
         var g = typify("a : (number|string) => a -> a", function() { return "const"; });
-        expect(g(1)).toBe("const");
-        expect(g("foo")).toBe("const");
+        assert(g(1) === "const");
+        assert(g("foo") === "const");
 
         var h = typify("a : number|string => a -> a", function() { return "const"; });
-        expect(function () { return h(1); }).toThrow();
+        assert.throws(function () {
+          return h(1);
+        });
       });
     });
 
@@ -263,7 +269,7 @@
 
         var arr = [];
         for (var i = 0; i < 20; i++) {
-          expect(f.apply(undefined, arr)).toBe(i);
+          assert(f.apply(undefined, arr) === i);
           arr.push(i);
         }
       });
@@ -275,7 +281,7 @@
 
         var arr = [];
         for (var i = 0; i < 20; i++) {
-          expect(f.apply(undefined, arr)).toBe(i);
+          assert(f.apply(undefined, arr) === i);
           arr.push(i);
         }
       });
@@ -287,13 +293,13 @@
 
         var numarr = [];
         for (var i = 0; i < 20; i++) {
-          expect(f.apply(undefined, numarr)).toBe(i);
+          assert(f.apply(undefined, numarr) === i);
           numarr.push(i);
         }
 
         var strarr = [];
         for (var j = 0; j < 20; j++) {
-          expect(f.apply(undefined, strarr)).toBe(j);
+          assert(f.apply(undefined, strarr) === j);
           strarr.push(""+j);
         }
       });
