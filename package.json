@@ -33,7 +33,8 @@
     "grunt-contrib-jshint": "~0.7.0",
     "grunt-contrib-watch": "~0.5.0",
     "grunt": "~0.4.1",
-    "grunt-simple-mocha": "~0.4.0"
+    "grunt-simple-mocha": "~0.4.0",
+    "jsverify": "~0.2.0"
   },
   "keywords": [
     "type",

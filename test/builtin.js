@@ -19,3 +19,11 @@ describe("date", function () {
     assert(!typify.check("date", 1));
   });
 });
+
+describe("null", function () {
+  it("matches `null`", function () {
+    assert(typify.check("null", null));
+    assert(!typify.check("null", undefined));
+    assert(!typify.check("null", {}));
+  });
+});
