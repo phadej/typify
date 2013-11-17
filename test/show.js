@@ -86,14 +86,14 @@ var checkableGen = {
 };
 
 describe("show + parse", function () {
-  it("show . parse . show . parse . show = show . parse . show", function () {
+  it("show . parse . show = show", function () {
     function normalize(t) {
       return parse(show.checkable(t));
     }
 
     var property = jsc.forall(checkableGen, function (t) {
       var n = normalize(t);
-      return show.checkable(normalize(n)) === show.checkable(n);
+      return show.checkable(t) === show.checkable(n);
     });
 
     jsc.assert(property);
