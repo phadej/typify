@@ -103,10 +103,8 @@ describe("show + parse", function () {
     }
 
     var property = jsc.forall(checkableGen, function (t) {
-      //console.log(JSON.stringify(t));
-      console.log("pretty", show.checkable(t));
-      console.log(normalize(t));
-      return true;
+      var n = normalize(t);
+      return show.checkable(normalize(n)) === show.checkable(n);
     });
 
     jsc.assert(property);
