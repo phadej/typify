@@ -26,6 +26,7 @@
     "node": ">= 0.8.0"
   },
   "scripts": {
+    "browserify": "mkdir -p dist/ && browserify -s jsc -o dist/typify.standalone.js ./lib/typify.js",
     "test": "grunt test"
   },
   "devDependencies": {

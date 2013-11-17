@@ -15,7 +15,7 @@ Install the module with: `npm install typify`
 
 ```javascript
 // Browser
-// <script src="typify.js" type="text/javascript"></script>
+// <script src="dist/typify.standalone.js" type="text/javascript"></script>
 
 // Node
 var typify = require("typify");
