@@ -26,11 +26,12 @@
     "node": ">= 0.8.0"
   },
   "scripts": {
+    "browserify": "mkdir -p dist/ && browserify -s jsc -o dist/typify.standalone.js ./lib/typify.js",
     "test": "grunt test"
   },
   "devDependencies": {
-    "grunt-contrib-jshint": "~0.6.0",
-    "grunt-contrib-watch": "~0.4.0",
+    "grunt-contrib-jshint": "~0.7.0",
+    "grunt-contrib-watch": "~0.5.0",
     "grunt": "~0.4.1",
     "grunt-simple-mocha": "~0.4.0"
   },
