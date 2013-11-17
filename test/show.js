@@ -7,6 +7,7 @@ var parse = require("../lib/checkableParser.js").parse;
 var show = require("../lib/show.js");
 var jsc = require("jsverify");
 var random = jsc._.random;
+var cons = require("../lib/checkableConstructors.js");
 
 function assertC(from, expected) {
   var actual = show.checkable(parse(from));
@@ -54,14 +55,6 @@ function arbitraryArray(size, arbitrary) {
   return arr;
 }
 
-function makeOpt(term) {
-  if (term.type === "opt") {
-    return term;
-  } else {
-    return { type: "opt", term: term };
-  }
-}
-
 function arbitraryCheckable(size) {
   var type;
   var idents = [ "foo", "bar", "baz", "quux" ];
@@ -69,23 +62,19 @@ function arbitraryCheckable(size) {
     type = random(0, 5);
 
     switch (type) {
-      case 0: return { type: "any" };
-      default: return { type: "var", name: idents[random(0, idents.length - 1)] };
+      case 0: return cons.any;
+      default: return cons.variable(idents[random(0, idents.length - 1)]);
     }
   } else {
     type = random(0, 5);
     var arr = arbitraryArray(1, arbitraryCheckable.bind(undefined, size - 1));
     switch (type) {
-      case 0: return { type: "any" };
-      case 1: return { type: "var", name: idents[random(0, idents.length - 1)] };
-      case 2: return { type: "alt", options: arr };
-      case 3: return { type: "and", options: arr };
-      case 4: return {
-        type: "poly",
-        name: idents[random(0, idents.length - 1)],
-        args: arr,
-      };
-      case 5: return makeOpt(arbitraryCheckable(size - 1));
+      case 0: return cons.any;
+      case 1: return cons.variable(idents[random(0, idents.length - 1)]);
+      case 2: return cons.alt(arr)
+      case 3: return cons.and(arr);
+      case 4: return cons.poly(idents[random(0, idents.length - 1)], arr);
+      case 5: return cons.opt(arbitraryCheckable(size - 1));
     }
   }
 }
