@@ -1,4 +1,4 @@
 /node_modules/
-_SpecRunner.html
 .grunt/
 def/dist
+coverage/
