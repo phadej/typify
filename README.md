@@ -1,8 +1,14 @@
-# typify [![Build Status](https://secure.travis-ci.org/phadej/typify.png?branch=master)](http://travis-ci.org/phadej/typify)
+# typify
 
-Runtime type-checking.
+> Runtime type-checking.
+
+[![Build Status](https://secure.travis-ci.org/phadej/typify.png?branch=master)](http://travis-ci.org/phadej/typify)
+[![NPM version](https://badge.fury.io/js/typify.png)](http://badge.fury.io/js/typify)
+[![Dependency Status](https://gemnasium.com/phadej/typify.png)](https://gemnasium.com/phadej/typify)
+[![Code Climate](https://codeclimate.com/github/phadej/typify.png)](https://codeclimate.com/github/phadej/typify)
 
 ## Getting Started
+
 Install the module with: `npm install typify`
 
 ## Synopsis
