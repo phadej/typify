@@ -106,7 +106,7 @@ There are few predefined checkable types:
     - σ_opt = σ_term | σ_term `?`
     - σ_term ::= `*` | α | *literal* | *typename* | `(` σ_alt `)`
 - *type variable* α ::= *identifier*
-- *literal* ::= /\d+/ | true | false | null
+- *literal* ::= /\d+/ | /"[^"]*"/ | /'[^']*'/ | true | false | null
 - *identifier*, *typename* ::= /[a-zA-Z_][a-zA-Z0-9_]*/
 
 ### Function type

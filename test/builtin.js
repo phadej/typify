@@ -37,6 +37,15 @@ describe("literal numbers", function () {
   });
 });
 
+describe("literal strings", function () {
+  it("matches string exactly", function () {
+    assert(typify.check("'foo'", "foo"));
+    assert(typify.check("\"foo\"", "foo"));
+    assert(!typify.check("'foo'", 2));
+    assert(typify.check("'bar'", "bar"));
+  });
+});
+
 describe("literal atoms", function () {
   it("matches true, false, null", function () {
     assert(typify.check("null", null));
