@@ -104,6 +104,8 @@ There are few predefined checkable types:
     - σ_and ::= σ_poly (`&` σ_poly)*
     - σ_poly ::= *typename* σ_opt+ | σ_opt
     - σ_opt = σ_term | σ_term `?`
+    - σ_record ::= `{` `}` | `{` σ_pair (`,` σ_pair)* `}`
+    - σ_pair ::= *identifier* `:` σ_term
     - σ_term ::= `*` | α | *literal* | *typename* | `(` σ_alt `)`
 - *type variable* α ::= *identifier*
 - *literal* ::= /\d+/ | /"[^"]*"/ | /'[^']*'/ | true | false | null
