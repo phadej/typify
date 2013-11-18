@@ -57,24 +57,27 @@ function arbitraryArray(size, arbitrary) {
 
 function arbitraryCheckable(size) {
   var idents = [ "foo", "bar", "baz", "quux", "true", "false", "null" ];
+  function randomIdent() {
+    return idents[random(0, idents.length - 1)];
+  }
   var type = random(0, 7);
   if (size === 0) {
     switch (type) {
       case 0: return cons.any;
       case 1: return cons.number(random(0, 10));
-      case 2: return cons.string(idents[random(0, idents.length - 1)]);
-      default: return cons.variable(idents[random(0, idents.length - 1)]);
+      case 2: return cons.string(randomIdent());
+      default: return cons.variable(randomIdent());
     }
   } else {
     var arr = arbitraryArray(1, arbitraryCheckable.bind(undefined, size - 1));
     switch (type) {
       case 0: return cons.any;
       case 1: return cons.number(random(0, 10));
-      case 2: return cons.string(idents[random(0, idents.length - 1)]);
-      case 3: return cons.variable(idents[random(0, idents.length - 1)]);
+      case 2: return cons.string(randomIdent());
+      case 3: return cons.variable(randomIdent());
       case 4: return cons.alt(arr);
       case 5: return cons.and(arr);
-      case 6: return cons.poly(idents[random(0, idents.length - 1)], arr);
+      case 6: return cons.poly(randomIdent(), arr);
       case 7: return cons.opt(arbitraryCheckable(size - 1));
     }
   }
