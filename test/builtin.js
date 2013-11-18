@@ -27,3 +27,12 @@ describe("null", function () {
     assert(!typify.check("null", {}));
   });
 });
+
+describe("literal numbers", function () {
+  it("matches number exactly", function () {
+    assert(typify.check("1", 1));
+    assert(!typify.check("1", "1"));
+    assert(!typify.check("1", 2));
+    assert(typify.check("100", 100));
+  });
+});
