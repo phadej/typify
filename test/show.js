@@ -60,7 +60,7 @@ function arbitraryCheckable(size) {
   function randomIdent() {
     return idents[random(0, idents.length - 1)];
   }
-  var type = random(0, 7);
+  var type = random(0, 8);
   if (size === 0) {
     switch (type) {
       case 0: return cons.any;
@@ -79,6 +79,19 @@ function arbitraryCheckable(size) {
       case 5: return cons.and(arr);
       case 6: return cons.poly(randomIdent(), arr);
       case 7: return cons.opt(arbitraryCheckable(size - 1));
+      case 8:
+        var fields = {};
+        var rsize = random(0, 2);
+        for (var i = 0; i < rsize; i++) {
+          while (true) {
+            var k = randomIdent();
+            if (fields.k === undefined) {
+              fields[k] = arbitraryCheckable(size - 1);
+              break;
+            }
+          }
+        }
+        return cons.record(fields);
     }
   }
 }
