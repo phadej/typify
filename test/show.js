@@ -56,7 +56,7 @@ function arbitraryArray(size, arbitrary) {
 }
 
 function arbitraryCheckable(size) {
-  var idents = [ "foo", "bar", "baz", "quux" ];
+  var idents = [ "foo", "bar", "baz", "quux", "true", "false", "null" ];
   var type = random(0, 6);
   if (size === 0) {
     switch (type) {

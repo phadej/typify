@@ -94,10 +94,10 @@
       var typ1 = typify.create();
       var typ2 = typify.create();
 
-      typ1.type("true", function () { return true; });
+      typ1.type("tru", function () { return true; });
       typ2.type("t", function () { return true; });
 
-      assert(typ1.check("true", 1));
+      assert(typ1.check("tru", 1));
       assert(typ2.check("t", 1));
 
       assert.throws(function () {
@@ -105,7 +105,7 @@
       });
 
       assert.throws(function () {
-        typ2.check("true", 1);
+        typ2.check("tru", 1);
       });
 
       assert.throws(function () {
@@ -113,7 +113,7 @@
       });
 
       assert.throws(function () {
-        typify.check("true", 1);
+        typify.check("tru", 1);
       });
     });
   });
