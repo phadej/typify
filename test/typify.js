@@ -74,7 +74,7 @@
       [true, "_|_"],
     ]);
 
-    var choose = typify("boolean -> number? -> number? -> number", function choose(test, t, f) {
+    var choose = typify("choose :: boolean -> number? -> number? -> number", function choose(test, t, f) {
       return test ? (t ? t : 1) : (f ? f : 0);
     });
     itreturns("choose", choose, [
@@ -166,6 +166,16 @@
   });
 
   describe("function types - typify()", function () {
+    describe("actions", function () {
+      it("are functions without parameters", function () {
+        var r = typify("r :: -> number", function () {
+          return 4;
+        });
+
+        r();
+      });
+    });
+
     describe("context", function () {
       it("polytypes don't need braces", function () {
         var f = typify("a : array * => a -> a", id);
