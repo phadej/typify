@@ -96,6 +96,7 @@ There are few predefined checkable types:
 - `function`
 - `array` _a_
 - `map` _a_
+- `tuple` _a_ _b_...
 
 #### Formal syntax of checkable type declaration:
 
