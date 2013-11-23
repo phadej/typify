@@ -193,6 +193,11 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+- 0.2.1
+    - anonymous record types
+    - tuple, numeric types
+    - mocha test-suite
+    - major code refactor
 - 0.2.0
     - Recursive record types
     - Recursive aliases

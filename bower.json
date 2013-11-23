@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git://github.com/phadej/typify.git"
   },
-  "main": "lib/typify.js",
+  "main": "dist/typify.standalone.js",
   "keywords": [
     "type",
     "checking"
