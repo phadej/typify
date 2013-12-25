@@ -161,7 +161,36 @@
 
       assert(typ.check("rarray", []));
       assert(!typ.check("rarray", 1));
+      assert(typ.check("rarray", [[]]));
+      assert(!typ.check("rarray", [[1]]));
       assert(typ.check("rarray", [[], [], [[[[[[[[]]]]]], []]]]));
+    });
+  });
+
+  describe("mutual recursive types - mutual()", function () {
+    var typ;
+
+    beforeEach(function () {
+      typ = typify.create();
+    });
+
+    it("can be recursive", function () {
+      typ.mutual({
+        "foo": "array bar",
+        "bar": "array foo",
+      });
+
+      assert(typ.check("foo", []));
+      assert(!typ.check("foo", 1));
+      assert(typ.check("foo", [[]]));
+      assert(!typ.check("foo", [[1]]));
+      assert(typ.check("foo", [[], [], [[[[[[[[]]]]]], []]]]));
+
+      assert(typ.check("bar", []));
+      assert(!typ.check("bar", 1));
+      assert(typ.check("bar", [[]]));
+      assert(!typ.check("bar", [[1]]));
+      assert(typ.check("bar", [[], [], [[[[[[[[]]]]]], []]]]));
     });
   });
 

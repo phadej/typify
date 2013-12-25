@@ -101,6 +101,9 @@ describe("recursive records", function () {
       value: 3,
       right: {
         value: 4,
+        right: {
+          value: 5,
+        }
       },
     };
 
