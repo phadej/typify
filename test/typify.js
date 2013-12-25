@@ -194,6 +194,28 @@
     });
   });
 
+  describe("instanceof types - instance()", function () {
+    var typ;
+
+    beforeEach(function () {
+      typ = typify.create();
+    });
+
+    it("work", function () {
+      function Foo() {}
+      function Bar() {}
+
+      typ.instance("Foo", Foo);
+      typ.instance("Bar", Bar);
+
+      assert(typ.check("Foo", new Foo()));
+      assert(!typ.check("Foo", new Bar()));
+
+      assert(!typ.check("Bar", new Foo()));
+      assert(typ.check("Bar", new Bar()));
+    });
+  });
+
   describe("function types - typify()", function () {
     describe("actions", function () {
       it("are functions without parameters", function () {
