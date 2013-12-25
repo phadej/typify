@@ -151,6 +151,14 @@ typify.alias("numstr", "number|string"); // numbers or strings
 typify.alias("rarray", "array rarray"); // arrays of itself, eg [[[[[[]]]]]
 ```
 
+For mutually recursive types use `typify.mutual`:
+```javascript
+typify.mutual({
+    "foo": "list bar",
+    "bar": "list foo",
+});
+```
+
 Also you can define *record* types with `typify.record`:
 
 ```javascript
