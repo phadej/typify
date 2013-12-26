@@ -210,6 +210,9 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+- 0.2.2
+    - mutually recursive types
+    - instanceof types
 - 0.2.1
     - anonymous record types
     - tuple, numeric types
