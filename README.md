@@ -95,7 +95,7 @@ There are few predefined checkable types:
 - `null`
 - `date`
 - `regexp`
-- `function`
+- `function`, `fn`
 - `array` _a_
 - `map` _a_
 - `tuple` _a_ _b_...
