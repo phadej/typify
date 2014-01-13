@@ -204,9 +204,8 @@ var typify = require("typify").create();
 ```
 
 ## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
-- You can use `grunt jasmine-build` to generate `_SpecRunner.html` to run tests in your browser of choice.
+In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using `npm test` command.
 
 ## Release History
 
@@ -231,6 +230,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 - 0.1.0 Initial release
 
 ## License
+
 Copyright (c) 2013 Oleg Grenrus. Licensed under the BSD3 license.
 
 ## Related work
