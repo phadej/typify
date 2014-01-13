@@ -74,5 +74,7 @@ describe("tuple", function () {
   it("is fixed size array", function () {
     assert(typify.check("tuple integer string", [0, "foo"]));
     assert(!typify.check("tuple integer string", [0, 0]));
+    assert(!typify.check("tuple integer string", [0]));
+    assert(!typify.check("tuple integer string", 0));
   });
 });

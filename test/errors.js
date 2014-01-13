@@ -54,4 +54,12 @@ describe("error cases", function () {
       typ.type("foo", function () {});
     });
   });
+
+  describe("check()", function () {
+    it("throws if unknown type is given", function () {
+      assert.throws(function () {
+        typ.check("list number", [1, 1]);
+      });
+    });
+  });
 });
