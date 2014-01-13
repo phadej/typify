@@ -194,6 +194,40 @@
     });
   });
 
+  describe("(kind of) abstract data types", function () {
+    var typ;
+
+    beforeEach(function () {
+      typ = typify.create();
+    });
+
+    it("work", function () {
+      typ.adt("option", {
+        "none": "{ type: 'none' }",
+        "some": "{ type: 'some', value: * }",
+      });
+
+      var someValue = { type: "some", value: 1 };
+      var noneValue = { type: "none" };
+      var otherValue = 1;
+
+      assert(typ.check("option", someValue));
+      assert(typ.check("some", someValue));
+      assert(!typ.check("none", someValue));
+      assert(!typ.check("number", someValue));
+
+      assert(typ.check("option", noneValue));
+      assert(!typ.check("some", noneValue));
+      assert(typ.check("none", noneValue));
+      assert(!typ.check("number", noneValue));
+
+      assert(!typ.check("option", otherValue));
+      assert(!typ.check("some", otherValue));
+      assert(!typ.check("none", otherValue));
+      assert(typ.check("number", otherValue));
+    });
+  });
+
   describe("instanceof types - instance()", function () {
     var typ;
 
