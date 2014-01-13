@@ -226,6 +226,12 @@
       assert(!typ.check("none", otherValue));
       assert(typ.check("number", otherValue));
     });
+
+    it("constructor cannot has the same name", function () {
+      assert.throws(function () {
+        typ.adt("foo", { foo: "number "});
+      });
+    });
   });
 
   describe("instanceof types - instance()", function () {
