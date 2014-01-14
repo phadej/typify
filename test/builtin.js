@@ -4,6 +4,7 @@
 
 var typify = require("../lib/typify.js");
 var assert = require("assert");
+var _ = require("lodash");
 
 describe("regexp", function () {
   it("are RegExp objects", function () {
@@ -48,6 +49,27 @@ describe("literal strings", function () {
 
 describe("literal atoms", function () {
   it("matches true, false, null", function () {
+    var literals = {
+      "null": null,
+      "true": true,
+      "false": false,
+      "infinity": Infinity,
+      "ninfinity": -Infinity,
+      "undefined": undefined,
+      "nat": 1,
+      "nan": NaN,
+    };
+
+    _.each(literals, function (v1, k1) {
+      _.each(literals, function (v2, k2) {
+        if (k1 === k2) {
+          assert(typify.check(k1, v2));
+        } else {
+          assert(!typify.check(k1, v2), k1 + " - " + v2);
+        }
+      });
+    });
+
     assert(typify.check("null", null));
     assert(!typify.check("true", null));
     assert(!typify.check("false", null));
