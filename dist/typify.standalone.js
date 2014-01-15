@@ -1,5 +1,6 @@
-!function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.jsc=e():"undefined"!=typeof global?global.jsc=e():"undefined"!=typeof self&&(self.jsc=e())}(function(){var define,module,exports;
-return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.jsc=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
 // Thunk, for the lazy-evaluation and recursive parser.
 function Thunk(f) {
   this.thunk = f;
@@ -141,7 +142,7 @@ function many(a) {
   };
 }
 
-function sepBy(a, sep, transform) {
+function sepBy(a, sep) {
   return function (tokens, idx) {
     a = force(a);
     var res = [];
@@ -186,6 +187,7 @@ module.exports = {
   optional: optional,
   delay: delay,
 };
+
 },{}],2:[function(require,module,exports){
 "use strict";
 
@@ -212,6 +214,7 @@ module.exports = {
   "date": p.isDate,
   "regexp": p.isRegExp,
   "function": p.isFunction,
+  "fn": p.isFunction,
   "array": function (arr, valueCheck) {
     return p.isArray(arr) && (!valueCheck || arr.every(valueCheck));
   },
@@ -230,6 +233,7 @@ module.exports = {
     return true;
   },
 };
+
 },{"./predicates.js":7,"./utils.js":10}],3:[function(require,module,exports){
 "use strict";
 
@@ -240,45 +244,45 @@ function constTrue() {
   return true;
 }
 
-// forward declaration
+// Forward declaration
 var compileCheckableTypeRecursive;
 
-function compileAndAlt(environment, context, recName, parsed, operator) {
-  var cs = parsed.options.map(compileCheckableTypeRecursive.bind(undefined, environment, context, recName));
-  return function (recCheck, varCheck, arg) {
+function compileAndAlt(environment, context, recNames, parsed, operator) {
+  var cs = parsed.options.map(compileCheckableTypeRecursive.bind(undefined, environment, context, recNames));
+  return function (recChecks, varCheck, arg) {
     return cs[operator](function (c) {
-      return c(recCheck, varCheck, arg);
+      return c(recChecks, varCheck, arg);
     });
   };
 }
 
-function compileVar(environment, context, recName, parsed) {
+function compileVar(environment, context, recNames, parsed) {
   if (utils.has(context, parsed.name)) {
-    return function (recCheck, varCheck, arg) {
+    return function (recChecks, varCheck, arg) {
       // console.log("varcheck", varCheck, arg);
       return varCheck(parsed.name, arg);
     };
   } else if (environment.has(parsed.name)) {
     var check = environment.get(parsed.name);
-    return function (recCheck, varCheck, arg) {
+    return function (recChecks, varCheck, arg) {
       return check(arg);
     };
-  } else if (parsed.name === recName) {
-    return function (recCheck, varCheck, arg) {
-      return recCheck(recCheck, varCheck, arg);
+  } else if (recNames && utils.contains(recNames, parsed.name)) {
+    return function (recChecks, varCheck, arg) {
+      return recChecks[parsed.name](recChecks, varCheck, arg);
     };
   } else {
     throw new Error("unknown type: " + parsed.name);
   }
 }
 
-function compilePoly(environment, context, recName, parsed) {
+function compilePoly(environment, context, recNames, parsed) {
   if (environment.has(parsed.name)) {
     var polyCheck = environment.get(parsed.name);
-    var args = parsed.args.map(compileCheckableTypeRecursive.bind(undefined, environment, context, recName));
-    return function (recCheck, varCheck, arg) {
+    var args = parsed.args.map(compileCheckableTypeRecursive.bind(undefined, environment, context, recNames));
+    return function (recChecks, varCheck, arg) {
       var argsChecks = args.map(function (argCheck) {
-        return argCheck.bind(undefined, recCheck, varCheck);
+        return argCheck.bind(undefined, recChecks, varCheck);
       });
       return polyCheck.apply(undefined, [arg].concat(argsChecks));
     };
@@ -287,36 +291,39 @@ function compilePoly(environment, context, recName, parsed) {
   }
 }
 
-function compileOpt(environment, context, recName, parsed) {
-  var c = compileCheckableTypeRecursive(environment, context, recName, parsed.term);
-  return function (recCheck, varCheck, arg) {
-    return arg === undefined || c(recCheck, varCheck, arg);
+function compileOpt(environment, context, recNames, parsed) {
+  var c = compileCheckableTypeRecursive(environment, context, recNames, parsed.term);
+  return function (recChecks, varCheck, arg) {
+    return arg === undefined || c(recChecks, varCheck, arg);
   };
 }
 
-function compileLiteral(environment, context, recName, parsed) {
-  return function (recCheck, varCheck, arg) {
-    return arg === parsed.value;
-  };
+function compileLiteral(environment, context, recNames, parsed) {
+  if (parsed.value !== parsed.value) {
+    // NaN
+    return function (recChecks, varCheck, arg) {
+      return arg !== arg;
+    };
+  } else {
+    return function (recChecks, varCheck, arg) {
+      return arg === parsed.value;
+    };
+  }
 }
 
-function compileRecord(environment, context, recName, parsed) {
+function compileRecord(environment, context, recNames, parsed) {
   var fields = {};
   for (var name in parsed.fields) {
-    if (utils.has(parsed.fields, name)) {
-      fields[name] = compileCheckableTypeRecursive(environment, context, recName, parsed.fields[name]);
-    }
+    fields[name] = compileCheckableTypeRecursive(environment, context, recNames, parsed.fields[name]);
   }
-  return function (recCheck, varCheck, arg) {
+  return function (recChecks, varCheck, arg) {
     if (!p.isObject(arg)) {
       return false;
     }
 
-    for (var name in fields) {
-      if (utils.has(fields, name)) {
-        if (!fields[name](recCheck, varCheck, arg[name])) {
-          return false;
-        }
+    for (var fieldName in fields) {
+      if (!fields[fieldName](recChecks, varCheck, arg[fieldName])) {
+        return false;
       }
     }
 
@@ -324,16 +331,23 @@ function compileRecord(environment, context, recName, parsed) {
   };
 }
 
-function compileCheckableTypeRecursive(environment, context, recName, parsed) {
+function compileUser(environment, context, recNames, parsed) {
+  return function (recChecks, varCheck, arg) {
+    return parsed.predicate(arg);
+  };
+}
+
+function compileCheckableTypeRecursive(environment, context, recNames, parsed) {
   switch (parsed.type) {
-    case "var": return compileVar(environment, context, recName, parsed);
-    case "literal": return compileLiteral(environment, context, recName, parsed);
-    case "poly": return compilePoly(environment, context, recName, parsed);
+    case "var": return compileVar(environment, context, recNames, parsed);
+    case "literal": return compileLiteral(environment, context, recNames, parsed);
+    case "poly": return compilePoly(environment, context, recNames, parsed);
     case "any": return constTrue;
-    case "opt": return compileOpt(environment, context, recName, parsed);
-    case "alt": return compileAndAlt(environment, context, recName, parsed, "some");
-    case "and": return compileAndAlt(environment, context, recName, parsed, "every");
-    case "record": return compileRecord(environment, context, recName, parsed);
+    case "opt": return compileOpt(environment, context, recNames, parsed);
+    case "alt": return compileAndAlt(environment, context, recNames, parsed, "some");
+    case "and": return compileAndAlt(environment, context, recNames, parsed, "every");
+    case "record": return compileRecord(environment, context, recNames, parsed);
+    case "user": return compileUser(environment, context, recNames, parsed);
   }
 }
 
@@ -346,6 +360,7 @@ module.exports = {
   compileRecursive: compileCheckableTypeRecursive,
   compileRecord: compileRecord,
 };
+
 },{"./predicates.js":7,"./utils.js":10}],4:[function(require,module,exports){
 "use strict";
 
@@ -358,6 +373,10 @@ function variable(name) {
     case "true": return { type: "literal", value: true };
     case "false": return { type: "literal", value: false };
     case "null": return { type: "literal", value: null };
+    case "infinity": return { type: "literal", value: Infinity };
+    case "ninfinity": return { type: "literal", value: -Infinity };
+    case "undefined": return { type: "literal", value: undefined };
+    case "nan": return { type: "literal", value: NaN };
   }
   return { type: "var", name: name };
 }
@@ -390,6 +409,22 @@ function record(fields) {
   return { type: "record", fields: fields };
 }
 
+function mergeOptions(type, a, b) {
+  if (a.type === type) {
+    if (b.type === type) {
+      return a.options.concat(b.options);
+    } else {
+      return a.options.concat([b]);
+    }
+  } else {
+    if (b.type === type) {
+      return [a].concat(b.options);
+    } else {
+      return [a, b];
+    }
+  }
+}
+
 function andOr(type, options) {
   assert(options.length > 0);
 
@@ -398,26 +433,15 @@ function andOr(type, options) {
   }
 
   return options.reduce(function (a, b) {
-    var options;
-    if (a.type === type) {
-      if (b.type === type) {
-        options = a.options.concat(b.options);
-      } else {
-        options = a.options.concat([b]);
-      }
-    } else {
-      if (b.type === type) {
-        options = [a].concat(b.options);
-      } else {
-        options = [a, b];
-      }
-    }
-
     return {
       type: type,
-      options: options,
+      options: mergeOptions(type, a, b),
     };
   });
+}
+
+function user(predicate) {
+  return { type: "user", predicate: predicate };
 }
 
 module.exports = {
@@ -430,8 +454,10 @@ module.exports = {
   record: record,
   and: andOr.bind(undefined, "and"),
   alt: andOr.bind(undefined, "alt"),
+  user: user,
 };
-},{"assert":12}],5:[function(require,module,exports){
+
+},{"assert":11}],5:[function(require,module,exports){
 "use strict";
 
 var A = require("./aparser.js");
@@ -538,6 +564,7 @@ module.exports = {
   polyP: polyP,
   parse: parseCheckableType,
 };
+
 },{"./aparser.js":1,"./checkableConstructors.js":4}],6:[function(require,module,exports){
 "use strict";
 
@@ -602,6 +629,7 @@ var functionTypeP = A.or(actionP, functionTypeP1);
 module.exports = {
   functionP: functionTypeP,
 };
+
 },{"./aparser.js":1,"./checkableParser":5}],7:[function(require,module,exports){
 "use strict";
 
@@ -668,6 +696,7 @@ module.exports = {
   isArray: isArray,
   isObject: isObject,
 };
+
 },{}],8:[function(require,module,exports){
 "use strict";
 
@@ -733,6 +762,7 @@ module.exports = {
   checkable: showCheckableType,
   context: showContext,
 };
+
 },{}],9:[function(require,module,exports){
 /*
 * typify
@@ -748,24 +778,19 @@ var p = require("./predicates.js");
 var A = require("./aparser.js");
 var c = require("./checkableCompiler.js");
 var cons = require("./checkableConstructors.js");
+var show = require("./show.js");
+var parseCheckableType = require("./checkableParser").parse;
+var compileCheckableType = c.compile;
+var compileCheckableTypeRecursive = c.compileRecursive;
+var functionP = require("./functionParser.js").functionP;
 
 // Few almost predicates
 function constFalse() {
   return false;
 }
 
-var functionP = require("./functionParser.js").functionP;
-
 var functionTypeCheckRe = /^([a-zA-Z_][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|[0-9]+|\*|\?|\||&|\(|\)|\{|\}|::|:|,|=>|->|\.\.\.|\s+)*$/;
 var functionTypeTokenRe = /([a-zA-Z_][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|[0-9]+|\*|\?|\||&|\(|\)|\{|\}|::|:|,|=>|->|\.\.\.)/g;
-
-// Checkable type parsing, check pre-compiling and pretty-printing
-
-var parseCheckableType = require("./checkableParser").parse;
-var compileCheckableType = require("./checkableCompiler.js").compile;
-var compileCheckableTypeRecursive = require("./checkableCompiler.js").compileRecursive;
-
-var show = require("./show.js");
 
 // Function type parsing, checks pre-compiling & pretty-printing
 
@@ -857,11 +882,11 @@ function decorate(environment, type, method) {
 
     // check that parameters are of right type
     for (var i = 0; i < arguments.length; i++) {
-      var check = i < compiled.params.length ? compiled.params[i] : compiled.rest;
-      var type =  i < compiled.params.length ? parsed.params[i] : parsed.rest;
-      if (!check(contextCheck, arguments[i])) {
+      var argCheck = i < compiled.params.length ? compiled.params[i] : compiled.rest;
+      var argType =  i < compiled.params.length ? parsed.params[i] : parsed.rest;
+      if (!argCheck(contextCheck, arguments[i])) {
         // TODO: str checkable type
-        throw new TypeError("type of " + parsed.name + " " + (i+1) + ". parameter is not `" + show.checkable(type) + "` in context `" + show.context(parsed.context) + "` -- " + JSON.stringify(arguments[i]));
+        throw new TypeError("type of " + parsed.name + " " + (i+1) + ". parameter is not `" + show.checkable(argType) + "` in context `" + show.context(parsed.context) + "` -- " + JSON.stringify(arguments[i]));
       }
     }
 
@@ -879,13 +904,18 @@ function decorate(environment, type, method) {
   };
 }
 
-// Add checkable type
-function type(environment, name, check) {
-  if (!p.isString(name)) { throw new TypeError("1st parameter's type expected to be string"); }
-  if (!p.isFunction(check)) { throw new TypeError("2nd parameter's type expected to be function"); }
-  if (environment.has(name)) { throw new Error(name + " is already defined"); }
-
-  environment.set(name, check);
+function parse(definition) {
+  if (p.isString(definition)) {
+    return parseCheckableType(definition);
+  } else if (p.isFunction(definition)) {
+    return cons.user(definition);
+  } else if (p.isArray(definition)) {
+    var options = definition.map(parse);
+    return cons.alt(options);
+  } else /* if (p.isObject(definition)) */ {
+    var fields = utils.mapValues(definition, parse);
+    return cons.record(fields);
+  }
 }
 
 // Check checkable type
@@ -908,26 +938,57 @@ function check(environment, type, variable) {
   }
 }
 
-function record(environment, name, definition) {
-  var fields = {};
-  for (var k in definition) {
-    if (utils.has(definition, k)) {
-      fields[k] = parseCheckableType(definition[k]);
-    }
-  }
+// Add single parsable type
+function addParsedTypes(environment, parsed) {
+  var names = Object.keys(parsed);
+  names.forEach(function (name) {
+    if (environment.has(name)) { throw new Error(name + " is already defined"); }
+  });
 
-  var type = cons.record(fields);
-  var check = c.compileRecord(environment, {}, name, type);
+  var compiled = utils.mapValues(parsed, compileCheckableTypeRecursive.bind(undefined, environment, {}, names));
+  var checks = utils.mapValues(compiled, function (check) {
+    return check.bind(undefined, compiled, constFalse);
+  });
 
-  // record check function is fixpoint of just defined `check`
-  environment.set(name, check.bind(undefined, check, constFalse));
+  environment.add(checks);
 }
 
-function alias(environment, name, definition) {
-  var parsed = parseCheckableType(definition);
-  var check = compileCheckableTypeRecursive(environment, {}, name, parsed);
+function addType(environment, name, definition) {
+  var parsed = {};
+  parsed[name] = parse(definition);
+  return addParsedTypes(environment, parsed);
+}
 
-  environment.set(name, check.bind(undefined, check, constFalse));
+// Or many simultanouslty
+function mutual(environment, definitions) {
+  var parsed = utils.mapValues(definitions, parse);
+  return addParsedTypes(environment, parsed);
+}
+
+function adt(environment, name, definitions) {
+  if (utils.has(definitions, name)) {
+    throw new Error("adt and it's constructor cannot has the same name");
+  }
+
+  var constructors = Object.keys(definitions);
+  var parsed = utils.mapValues(definitions, parse);
+  parsed[name] = parse(constructors);
+
+  return addParsedTypes(environment, parsed);
+}
+
+function instance(environment, name, cls) {
+  return addType(environment, name, function (arg) {
+    return arg instanceof cls;
+  });
+}
+
+function wrap(environment, module, signatures) {
+  for (var fn in signatures) {
+    module[fn] = decorate(environment, fn + " :: " + signatures[fn], module[fn]);
+  }
+
+  return module;
 }
 
 var buildInTypes = require("./builtin.js");
@@ -944,8 +1005,25 @@ Environment.prototype.get = function environmentGet(type) {
   return this.types[type] || buildInTypes[type];
 };
 
-Environment.prototype.set = function environmentSet(type, check) {
-  this.types[type] = check;
+Environment.prototype.add = function environmentAdd(checks) {
+  Object.keys(checks).forEach(function (type) {
+    this.types[type] = checks[type];
+  }, this);
+};
+
+// typify public API type signatures
+var TYPE_SIGNATURES = {
+  // TODO: change fn to multi type and deprecate alias & record
+  type: "string -> fn -> *",
+// TODO: support alternative function signatures
+// TODO: support specifying required but "any" parameter
+//  check: "string -> * -> boolean",
+  alias: "string -> string -> *",
+  record: "string -> map string -> *",
+  mutual: "map string -> *",
+  instance: "string -> fn -> *",
+  wrap: "* -> map string -> *",
+  adt: "string -> map string -> *",
 };
 
 // Create typify
@@ -955,21 +1033,24 @@ function create() {
   var env = new Environment();
 
   var typify = decorate.bind(undefined, env);
-  typify.type = type.bind(undefined, env);
+  typify.type = addType.bind(undefined, env);
+  typify.alias = addType.bind(undefined, env);
+  typify.record = addType.bind(undefined, env);
+  typify.mutual = mutual.bind(undefined, env);
+  typify.adt = adt.bind(undefined, env);
+  typify.instance = instance.bind(undefined, env);
   typify.check = check.bind(undefined, env);
-  typify.alias = alias.bind(undefined, env);
-  typify.record = record.bind(undefined, env);
+  typify.wrap = wrap.bind(undefined, env);
 
   // also add recursive create
   // make recursive environments or just possible to merge types from old?
   typify.create = create;
 
-  return typify;
+  return typify.wrap(typify, TYPE_SIGNATURES);
 }
 
 // Export  stuff
-var typify = create();
-module.exports = typify;
+module.exports = create();
 
 },{"./aparser.js":1,"./builtin.js":2,"./checkableCompiler.js":3,"./checkableConstructors.js":4,"./checkableParser":5,"./functionParser.js":6,"./predicates.js":7,"./show.js":8,"./utils.js":10}],10:[function(require,module,exports){
 "use strict";
@@ -977,6 +1058,11 @@ module.exports = typify;
 // Does the object contain given key? http://underscorejs.org/#has
 function has(object, property) {
   return Object.prototype.hasOwnProperty.call(object, property);
+}
+
+// :: list -> * -> boolean
+function contains(array, element) {
+  return array.indexOf(element) !== -1;
 }
 
 // Create a shallow-copied clone of the object. http://underscorejs.org/#clone
@@ -988,7 +1074,7 @@ function copyObj(obj) {
   return res;
 }
 
-// 
+// Returns values of the object
 function values(obj) {
   var res = [];
   for (var k in obj) {
@@ -999,255 +1085,56 @@ function values(obj) {
   return res;
 }
 
-module.exports = {
-  has: has,
-  copyObj: copyObj,
-  values: values,
-};
-},{}],11:[function(require,module,exports){
-
-
-//
-// The shims in this file are not fully implemented shims for the ES5
-// features, but do work for the particular usecases there is in
-// the other modules.
-//
-
-var toString = Object.prototype.toString;
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-// Array.isArray is supported in IE9
-function isArray(xs) {
-  return toString.call(xs) === '[object Array]';
-}
-exports.isArray = typeof Array.isArray === 'function' ? Array.isArray : isArray;
-
-// Array.prototype.indexOf is supported in IE9
-exports.indexOf = function indexOf(xs, x) {
-  if (xs.indexOf) return xs.indexOf(x);
-  for (var i = 0; i < xs.length; i++) {
-    if (x === xs[i]) return i;
-  }
-  return -1;
-};
-
-// Array.prototype.filter is supported in IE9
-exports.filter = function filter(xs, fn) {
-  if (xs.filter) return xs.filter(fn);
-  var res = [];
-  for (var i = 0; i < xs.length; i++) {
-    if (fn(xs[i], i, xs)) res.push(xs[i]);
+function mapValues(obj, f) {
+  var res = {};
+  for (var k in obj) {
+    if (has(obj, k)) {
+      res[k] = f(obj[k]);
+    }
   }
   return res;
+}
+
+module.exports = {
+  has: has,
+  contains: contains,
+  copyObj: copyObj,
+  values: values,
+  mapValues: mapValues,
 };
 
-// Array.prototype.forEach is supported in IE9
-exports.forEach = function forEach(xs, fn, self) {
-  if (xs.forEach) return xs.forEach(fn, self);
-  for (var i = 0; i < xs.length; i++) {
-    fn.call(self, xs[i], i, xs);
-  }
-};
-
-// Array.prototype.map is supported in IE9
-exports.map = function map(xs, fn) {
-  if (xs.map) return xs.map(fn);
-  var out = new Array(xs.length);
-  for (var i = 0; i < xs.length; i++) {
-    out[i] = fn(xs[i], i, xs);
-  }
-  return out;
-};
-
-// Array.prototype.reduce is supported in IE9
-exports.reduce = function reduce(array, callback, opt_initialValue) {
-  if (array.reduce) return array.reduce(callback, opt_initialValue);
-  var value, isValueSet = false;
-
-  if (2 < arguments.length) {
-    value = opt_initialValue;
-    isValueSet = true;
-  }
-  for (var i = 0, l = array.length; l > i; ++i) {
-    if (array.hasOwnProperty(i)) {
-      if (isValueSet) {
-        value = callback(value, array[i], i, array);
-      }
-      else {
-        value = array[i];
-        isValueSet = true;
-      }
-    }
-  }
-
-  return value;
-};
-
-// String.prototype.substr - negative index don't work in IE8
-if ('ab'.substr(-1) !== 'b') {
-  exports.substr = function (str, start, length) {
-    // did we get a negative start, calculate how much it is from the beginning of the string
-    if (start < 0) start = str.length + start;
-
-    // call the original function
-    return str.substr(start, length);
-  };
-} else {
-  exports.substr = function (str, start, length) {
-    return str.substr(start, length);
-  };
-}
-
-// String.prototype.trim is supported in IE9
-exports.trim = function (str) {
-  if (str.trim) return str.trim();
-  return str.replace(/^\s+|\s+$/g, '');
-};
-
-// Function.prototype.bind is supported in IE9
-exports.bind = function () {
-  var args = Array.prototype.slice.call(arguments);
-  var fn = args.shift();
-  if (fn.bind) return fn.bind.apply(fn, args);
-  var self = args.shift();
-  return function () {
-    fn.apply(self, args.concat([Array.prototype.slice.call(arguments)]));
-  };
-};
-
-// Object.create is supported in IE9
-function create(prototype, properties) {
-  var object;
-  if (prototype === null) {
-    object = { '__proto__' : null };
-  }
-  else {
-    if (typeof prototype !== 'object') {
-      throw new TypeError(
-        'typeof prototype[' + (typeof prototype) + '] != \'object\''
-      );
-    }
-    var Type = function () {};
-    Type.prototype = prototype;
-    object = new Type();
-    object.__proto__ = prototype;
-  }
-  if (typeof properties !== 'undefined' && Object.defineProperties) {
-    Object.defineProperties(object, properties);
-  }
-  return object;
-}
-exports.create = typeof Object.create === 'function' ? Object.create : create;
-
-// Object.keys and Object.getOwnPropertyNames is supported in IE9 however
-// they do show a description and number property on Error objects
-function notObject(object) {
-  return ((typeof object != "object" && typeof object != "function") || object === null);
-}
-
-function keysShim(object) {
-  if (notObject(object)) {
-    throw new TypeError("Object.keys called on a non-object");
-  }
-
-  var result = [];
-  for (var name in object) {
-    if (hasOwnProperty.call(object, name)) {
-      result.push(name);
-    }
-  }
-  return result;
-}
-
-// getOwnPropertyNames is almost the same as Object.keys one key feature
-//  is that it returns hidden properties, since that can't be implemented,
-//  this feature gets reduced so it just shows the length property on arrays
-function propertyShim(object) {
-  if (notObject(object)) {
-    throw new TypeError("Object.getOwnPropertyNames called on a non-object");
-  }
-
-  var result = keysShim(object);
-  if (exports.isArray(object) && exports.indexOf(object, 'length') === -1) {
-    result.push('length');
-  }
-  return result;
-}
-
-var keys = typeof Object.keys === 'function' ? Object.keys : keysShim;
-var getOwnPropertyNames = typeof Object.getOwnPropertyNames === 'function' ?
-  Object.getOwnPropertyNames : propertyShim;
-
-if (new Error().hasOwnProperty('description')) {
-  var ERROR_PROPERTY_FILTER = function (obj, array) {
-    if (toString.call(obj) === '[object Error]') {
-      array = exports.filter(array, function (name) {
-        return name !== 'description' && name !== 'number' && name !== 'message';
-      });
-    }
-    return array;
-  };
-
-  exports.keys = function (object) {
-    return ERROR_PROPERTY_FILTER(object, keys(object));
-  };
-  exports.getOwnPropertyNames = function (object) {
-    return ERROR_PROPERTY_FILTER(object, getOwnPropertyNames(object));
-  };
-} else {
-  exports.keys = keys;
-  exports.getOwnPropertyNames = getOwnPropertyNames;
-}
-
-// Object.getOwnPropertyDescriptor - supported in IE8 but only on dom elements
-function valueObject(value, key) {
-  return { value: value[key] };
-}
-
-if (typeof Object.getOwnPropertyDescriptor === 'function') {
-  try {
-    Object.getOwnPropertyDescriptor({'a': 1}, 'a');
-    exports.getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-  } catch (e) {
-    // IE8 dom element issue - use a try catch and default to valueObject
-    exports.getOwnPropertyDescriptor = function (value, key) {
-      try {
-        return Object.getOwnPropertyDescriptor(value, key);
-      } catch (e) {
-        return valueObject(value, key);
-      }
-    };
-  }
-} else {
-  exports.getOwnPropertyDescriptor = valueObject;
-}
-
-},{}],12:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
+},{}],11:[function(require,module,exports){
+// http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
+// THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
 //
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
+// Originally from narwhal.js (http://narwhaljs.org)
+// Copyright (c) 2009 Thomas Robinson <280north.com>
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the 'Software'), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// UTILITY
-var util = require('util');
-var shims = require('_shims');
+// when used in node, this will actually load the util module we depend on
+// versus loading the builtin util module as happens otherwise
+// this is a bug in node module loading as far as I am concerned
+var util = require('util/');
+
 var pSlice = Array.prototype.slice;
+var hasOwn = Object.prototype.hasOwnProperty;
 
 // 1. The assert module provides functions that throw
 // AssertionError's when particular conditions are not met. The
@@ -1265,7 +1152,37 @@ assert.AssertionError = function AssertionError(options) {
   this.actual = options.actual;
   this.expected = options.expected;
   this.operator = options.operator;
-  this.message = options.message || getMessage(this);
+  if (options.message) {
+    this.message = options.message;
+    this.generatedMessage = false;
+  } else {
+    this.message = getMessage(this);
+    this.generatedMessage = true;
+  }
+  var stackStartFunction = options.stackStartFunction || fail;
+
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, stackStartFunction);
+  }
+  else {
+    // non v8 browsers so we can have a stacktrace
+    var err = new Error();
+    if (err.stack) {
+      var out = err.stack;
+
+      // try to strip useless frames
+      var fn_name = stackStartFunction.name;
+      var idx = out.indexOf('\n' + fn_name);
+      if (idx >= 0) {
+        // once we have located the function frame
+        // we need to strip out everything before it (and its line)
+        var next_line = out.indexOf('\n', idx + 1);
+        out = out.substring(next_line + 1);
+      }
+
+      this.stack = out;
+    }
+  }
 };
 
 // assert.AssertionError instanceof Error
@@ -1425,8 +1342,8 @@ function objEquiv(a, b) {
     return _deepEqual(a, b);
   }
   try {
-    var ka = shims.keys(a),
-        kb = shims.keys(b),
+    var ka = objectKeys(a),
+        kb = objectKeys(b),
         key, i;
   } catch (e) {//happens when one is a string literal and the other isn't
     return false;
@@ -1539,8 +1456,104 @@ assert.doesNotThrow = function(block, /*optional*/message) {
 };
 
 assert.ifError = function(err) { if (err) {throw err;}};
-},{"_shims":11,"util":13}],13:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
+
+var objectKeys = Object.keys || function (obj) {
+  var keys = [];
+  for (var key in obj) {
+    if (hasOwn.call(obj, key)) keys.push(key);
+  }
+  return keys;
+};
+
+},{"util/":15}],12:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],13:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],14:[function(require,module,exports){
+module.exports = function isBuffer(arg) {
+  return arg && typeof arg === 'object'
+    && typeof arg.copy === 'function'
+    && typeof arg.fill === 'function'
+    && typeof arg.readUInt8 === 'function';
+}
+},{}],15:[function(require,module,exports){
+var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
@@ -1560,8 +1573,6 @@ assert.ifError = function(err) { if (err) {throw err;}};
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var shims = require('_shims');
 
 var formatRegExp = /%[sdj%]/g;
 exports.format = function(f) {
@@ -1601,6 +1612,62 @@ exports.format = function(f) {
   }
   return str;
 };
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  // Allow for deprecating things in the process of starting up.
+  if (isUndefined(global.process)) {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  if (process.noDeprecation === true) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnviron;
+exports.debuglog = function(set) {
+  if (isUndefined(debugEnviron))
+    debugEnviron = process.env.NODE_DEBUG || '';
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
 
 /**
  * Echos the value of a value. Trys to print the value out
@@ -1688,7 +1755,7 @@ function stylizeNoColor(str, styleType) {
 function arrayToHash(array) {
   var hash = {};
 
-  shims.forEach(array, function(val, idx) {
+  array.forEach(function(val, idx) {
     hash[val] = true;
   });
 
@@ -1706,7 +1773,7 @@ function formatValue(ctx, value, recurseTimes) {
       value.inspect !== exports.inspect &&
       // Also filter out any prototype objects using the circular check.
       !(value.constructor && value.constructor.prototype === value)) {
-    var ret = value.inspect(recurseTimes);
+    var ret = value.inspect(recurseTimes, ctx);
     if (!isString(ret)) {
       ret = formatValue(ctx, ret, recurseTimes);
     }
@@ -1720,11 +1787,18 @@ function formatValue(ctx, value, recurseTimes) {
   }
 
   // Look up the keys of the object.
-  var keys = shims.keys(value);
+  var keys = Object.keys(value);
   var visibleKeys = arrayToHash(keys);
 
   if (ctx.showHidden) {
-    keys = shims.getOwnPropertyNames(value);
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
   }
 
   // Some type of object without properties can be shortcutted.
@@ -1836,8 +1910,7 @@ function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
       output.push('');
     }
   }
-
-  shims.forEach(keys, function(key) {
+  keys.forEach(function(key) {
     if (!key.match(/^\d+$/)) {
       output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
           key, true));
@@ -1849,7 +1922,7 @@ function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
 
 function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
   var name, str, desc;
-  desc = shims.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
   if (desc.get) {
     if (desc.set) {
       str = ctx.stylize('[Getter/Setter]', 'special');
@@ -1861,12 +1934,11 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
       str = ctx.stylize('[Setter]', 'special');
     }
   }
-
   if (!hasOwnProperty(visibleKeys, key)) {
     name = '[' + key + ']';
   }
   if (!str) {
-    if (shims.indexOf(ctx.seen, desc.value) < 0) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
       if (isNull(recurseTimes)) {
         str = formatValue(ctx, desc.value, null);
       } else {
@@ -1909,7 +1981,7 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
 
 function reduceToSingleString(output, base, braces) {
   var numLinesEst = 0;
-  var length = shims.reduce(output, function(prev, cur) {
+  var length = output.reduce(function(prev, cur) {
     numLinesEst++;
     if (cur.indexOf('\n') >= 0) numLinesEst++;
     return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
@@ -1931,7 +2003,7 @@ function reduceToSingleString(output, base, braces) {
 // NOTE: These type checking functions intentionally don't use `instanceof`
 // because it is fragile and can be easily faked with `Object.create()`.
 function isArray(ar) {
-  return shims.isArray(ar);
+  return Array.isArray(ar);
 }
 exports.isArray = isArray;
 
@@ -1976,7 +2048,7 @@ function isRegExp(re) {
 exports.isRegExp = isRegExp;
 
 function isObject(arg) {
-  return typeof arg === 'object' && arg;
+  return typeof arg === 'object' && arg !== null;
 }
 exports.isObject = isObject;
 
@@ -1986,7 +2058,8 @@ function isDate(d) {
 exports.isDate = isDate;
 
 function isError(e) {
-  return isObject(e) && objectToString(e) === '[object Error]';
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
 }
 exports.isError = isError;
 
@@ -2005,14 +2078,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-function isBuffer(arg) {
-  return arg && typeof arg === 'object'
-    && typeof arg.copy === 'function'
-    && typeof arg.fill === 'function'
-    && typeof arg.binarySlice === 'function'
-  ;
-}
-exports.isBuffer = isBuffer;
+exports.isBuffer = require('./support/isBuffer');
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -2056,23 +2122,13 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = function(ctor, superCtor) {
-  ctor.super_ = superCtor;
-  ctor.prototype = shims.create(superCtor.prototype, {
-    constructor: {
-      value: ctor,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-};
+exports.inherits = require('inherits');
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
   if (!add || !isObject(add)) return origin;
 
-  var keys = shims.keys(add);
+  var keys = Object.keys(add);
   var i = keys.length;
   while (i--) {
     origin[keys[i]] = add[keys[i]];
@@ -2084,7 +2140,6 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-},{"_shims":11}]},{},[9])
+},{"./support/isBuffer":14,"__browserify_process":13,"inherits":12}]},{},[9])
 (9)
 });
-;
