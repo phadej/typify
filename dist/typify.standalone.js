@@ -773,6 +773,8 @@ module.exports = {
 */
 "use strict";
 
+var VERSION = [0, 2, 3];
+
 var utils = require("./utils.js");
 var p = require("./predicates.js");
 var A = require("./aparser.js");
@@ -1041,6 +1043,7 @@ function create() {
   typify.instance = instance.bind(undefined, env);
   typify.check = check.bind(undefined, env);
   typify.wrap = wrap.bind(undefined, env);
+  typify.version = VERSION;
 
   // also add recursive create
   // make recursive environments or just possible to merge types from old?
