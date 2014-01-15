@@ -92,13 +92,13 @@ There are few predefined checkable types:
 - `finite` _x_
 - `string`
 - `boolean`
-- `null`
 - `date`
 - `regexp`
 - `function`, `fn`
 - `array` _a_
 - `map` _a_
 - `tuple` _a_ _b_...
+- `null`, `undefined`, `infinity`, `ninfinity`, `nan`, `true` and `false`
 
 #### Formal syntax of checkable type declaration:
 
@@ -111,7 +111,7 @@ There are few predefined checkable types:
     - σ_pair ::= *identifier* `:` σ_term
     - σ_term ::= `*` | α | *literal* | *typename* | `(` σ_alt `)`
 - *type variable* α ::= *identifier*
-- *literal* ::= /\d+/ | /"[^"]*"/ | /'[^']*'/ | true | false | null
+- *literal* ::= /\d+/ | /"[^"]*"/ | /'[^']*'/ | true | false | null | undefined | nan | infinity | ninfinity
 - *identifier*, *typename* ::= /[a-zA-Z_][a-zA-Z0-9_]*/
 
 ### Function type
@@ -209,6 +209,14 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+- 0.2.3
+    - `fn` shorthand for the function type
+    - `typify.wrap` to typify modules
+    - [istanbul](http://gotwarlost.github.io/istanbul/) code covarage as part of the test suite
+    - `typify.adt` helper for specifying abstract data types -like structures
+    - `infinity`, `ninfinity` and `nan` literals
+    - unified implementation of `typify.type`, `typify.alias` and `typify.record`.
+         - The latter two will be deprecated in 0.3.0 and removed in 0.4.0
 - 0.2.2
     - mutually recursive types
     - instanceof types
