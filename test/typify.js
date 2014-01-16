@@ -292,6 +292,17 @@
           return h(1);
         });
       });
+
+      it("context variable may be polytype", function () {
+        var f = typify("a : map | array, b : number | string => a b -> a b", id);
+        assert.deepEqual(f([1, 2, 3]), [1, 2, 3]);
+        assert.deepEqual(f(["foo", "bar"]), ["foo", "bar"]);
+        assert.deepEqual(f({ "foo": 1, "bar": 2 }), { "foo": 1, "bar": 2 });
+        assert.deepEqual(f({ "foo": "bar" }), { "foo": "bar" });
+        assert.throws(function() { f([true]); });
+        assert.throws(function() { f({ "foo": true }); });
+        assert.throws(function() { f("foo"); });
+      });
     });
 
     describe("rest parameters", function () {
