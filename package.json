@@ -31,7 +31,8 @@
     "mocha": "node_modules/.bin/mocha --reporter spec test",
     "istanbul": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha test",
     "check-coverage": "node_modules/.bin/istanbul check-coverage --statements -11 --branches -5 --functions -6 coverage/coverage.json",
-    "test": "npm run-script jshint && npm run-script mocha && npm run-script istanbul && npm run-script check-coverage"
+    "typify": "node_modules/.bin/typify -- node_modules/.bin/_mocha -c test",
+    "test": "npm run-script jshint && npm run-script mocha && npm run-script istanbul && npm run-script check-coverage && npm run-script typify"
   },
   "devDependencies": {
     "jsverify": "~0.2.0",
@@ -39,7 +40,8 @@
     "mocha": "~1.17.0",
     "browserify": "~3.20.0",
     "jshint": "~2.4.1",
-    "lodash": "~2.4.1"
+    "lodash": "~2.4.1",
+    "typify": "phadej/typify-bin"
   },
   "keywords": [
     "type",

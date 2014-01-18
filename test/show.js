@@ -4,10 +4,10 @@
 
 var assert = require("assert");
 var parse = require("../lib/checkableParser.js").parse;
+var cons = require("../lib/checkableConstructors.js");
 var show = require("../lib/show.js");
 var jsc = require("jsverify");
 var random = jsc._.random;
-var cons = require("../lib/checkableConstructors.js");
 
 function assertC(from, expected) {
   var actual = show.checkable(parse(from));

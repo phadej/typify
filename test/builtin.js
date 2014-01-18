@@ -100,3 +100,10 @@ describe("tuple", function () {
     assert(!typify.check("tuple integer string", 0));
   });
 });
+
+describe("arguments", function () {
+  it("are special object", function () {
+    assert(typify.check("arguments", arguments));
+    assert(!typify.check("arguments", []));
+  });
+});
