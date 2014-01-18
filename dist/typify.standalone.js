@@ -1,17 +1,24 @@
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.jsc=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
+var utils = require("./utils.js");
+
+// typify: instance Thunk
+
 // Thunk, for the lazy-evaluation and recursive parser.
+// :: fn -> undefined
 function Thunk(f) {
   this.thunk = f;
   this.forced = false;
   this.value = undefined;
 }
 
+// :: * -> Thunk
 function delay(f) {
   return new Thunk(f);
 }
 
+// :: * -> *
 function force(thunk) {
   if (thunk instanceof Thunk) {
     if (!thunk.forced) {
@@ -24,6 +31,7 @@ function force(thunk) {
   }
 }
 
+// :: fn -> array string -> *
 function parse(p, tokens) {
   var res = p(tokens, 0);
   // console.log("parse", res, tokens, tokens.length);
@@ -34,6 +42,7 @@ function parse(p, tokens) {
   }
 }
 
+// :: array string -> nat -> (tuple undefined idx)?
 function eof(tokens, idx) {
   // console.log("eof", tokens, idx);
   if (idx < tokens.length) {
@@ -43,7 +52,9 @@ function eof(tokens, idx) {
   }
 }
 
+// :: string -> fn
 function token(tok) {
+  // :: array string -> nat -> (tuple string nat)?
   return function (tokens, idx) {
     // console.log("token", tokens, idx, tok);
     if (idx >= tokens.length) { return undefined; }
@@ -55,7 +66,9 @@ function token(tok) {
   };
 }
 
+// :: fn -> fn
 function satisfying(predicate) {
+  // :: array string -> nat -> (tuple string nat)?
   return function (tokens, idx) {
     // console.log("satisfying", predicate.name || predicate, tokens, idx);
     if (idx >= tokens.length) { return undefined; }
@@ -67,7 +80,9 @@ function satisfying(predicate) {
   };
 }
 
+// :: -> fn
 function any() {
+  // :: array string -> nat -> (tuple string nat)?
   return function (tokens, idx) {
     if (idx < tokens.length) {
       return [tokens[idx], idx+1];
@@ -77,15 +92,19 @@ function any() {
   };
 }
 
+// :: * -> fn
 function pure(x) {
+  // :: array string -> nat -> tuple * nat
   return function (tokens, idx) {
     return [x, idx];
   };
 }
 
+// :: fn... -> fn
 function or() {
-  var args = Array.prototype.slice.call(arguments);
+  var args = utils.slice(arguments);
   var len = args.length;
+  // :: array string -> nat -> (tuple * nat)?
   return function (tokens, idx) {
     for (var i = 0; i < len; i++) {
       var res = force(args[i])(tokens, idx);
@@ -95,10 +114,12 @@ function or() {
   };
 }
 
+// :: fn | Thunk ... -> fn
 function lift() {
   var len = arguments.length - 1;
   var f = arguments[len];
-  var args = Array.prototype.slice.call(arguments, 0, -1);
+  var args = utils.slice(arguments, 0, -1);
+  // :: array string -> nat -> (tuple * nat)?
   return function(tokens, idx) {
     var resargs = new Array(len);
     for (var i = 0; i < len; i++) {
@@ -113,6 +134,7 @@ function lift() {
   };
 }
 
+// :: array -> * -> array string -> nat -> tuple array nat
 function manyLoop(res, a, tokens, idx) {
   while (true) {
     var aq = a(tokens, idx);
@@ -122,7 +144,9 @@ function manyLoop(res, a, tokens, idx) {
   }
 }
 
+// :: fn -> fn
 function some(a) {
+  // :: array string -> nat -> (tuple array nat)?
   return function (tokens, idx) {
     a = force(a);
     var res = [];
@@ -134,7 +158,9 @@ function some(a) {
   };
 }
 
+// :: fn -> fn
 function many(a) {
+  // :: array string -> nat -> tuple array nat
   return function (tokens, idx) {
     a = force(a);
     var res = [];
@@ -142,7 +168,9 @@ function many(a) {
   };
 }
 
+// :: fn -> string -> fn
 function sepBy(a, sep) {
+  // :: array string -> nat -> (tuple array nat)?
   return function (tokens, idx) {
     a = force(a);
     var res = [];
@@ -161,7 +189,9 @@ function sepBy(a, sep) {
   };
 }
 
+// :: fn -> * -> fn
 function optional(p, def) {
+  // :: array string -> nat -> (tuple * nat)?
   return function (tokens, idx) {
     var res = force(p)(tokens, idx);
     if (res === undefined) {
@@ -188,7 +218,7 @@ module.exports = {
   delay: delay,
 };
 
-},{}],2:[function(require,module,exports){
+},{"./utils.js":10}],2:[function(require,module,exports){
 "use strict";
 
 var p = require("./predicates.js");
@@ -215,15 +245,17 @@ module.exports = {
   "regexp": p.isRegExp,
   "function": p.isFunction,
   "fn": p.isFunction,
+  "arguments": p.isArguments,
+  "any": p.constTrue,
   "array": function (arr, valueCheck) {
-    return p.isArray(arr) && (!valueCheck || arr.every(valueCheck));
+    return p.isArray(arr) && (!valueCheck || utils.every(arr, valueCheck));
   },
   "map": function (map, valueCheck) {
-    return p.isObject(map) && (!valueCheck || utils.values(map).every(valueCheck));
+    return (p.isObject(map) && !p.isArray(map)) && (!valueCheck || utils.every(utils.values(map), valueCheck));
   },
   "tuple": function (v) {
     if (!Array.isArray(v)) { return false; }
-    var args = Array.prototype.slice.call(arguments, 1);
+    var args = utils.slice(arguments, 1);
     if (args.length !== v.length) { return false; }
     for (var i = 0; i < args.length; i++) {
       if (!args[i](v[i])) {
@@ -240,15 +272,13 @@ module.exports = {
 var utils = require("./utils.js");
 var p = require("./predicates.js");
 
-function constTrue() {
-  return true;
-}
-
 // Forward declaration
 var compileCheckableTypeRecursive;
 
+// :: Environment -> map (array checkable) -> array string -> checkableAlt | checkableAnd -> 'every' | 'some' -> fn
 function compileAndAlt(environment, context, recNames, parsed, operator) {
-  var cs = parsed.options.map(compileCheckableTypeRecursive.bind(undefined, environment, context, recNames));
+  var cs = utils.map(parsed.options, compileCheckableTypeRecursive.bind(undefined, environment, context, recNames));
+  // compiledOptAlt :: map fn -> fn -> * -> boolean
   return function (recChecks, varCheck, arg) {
     return cs[operator](function (c) {
       return c(recChecks, varCheck, arg);
@@ -256,18 +286,23 @@ function compileAndAlt(environment, context, recNames, parsed, operator) {
   };
 }
 
+// :: Environment -> map (array checkable) -> array string -> checkableVar -> fn
 function compileVar(environment, context, recNames, parsed) {
   if (utils.has(context, parsed.name)) {
+    // compiledContext :: map fn -> fn -> * -> boolean
     return function (recChecks, varCheck, arg) {
       // console.log("varcheck", varCheck, arg);
       return varCheck(parsed.name, arg);
     };
   } else if (environment.has(parsed.name)) {
     var check = environment.get(parsed.name);
-    return function (recChecks, varCheck, arg) {
-      return check(arg);
+    // compiledEnv :: map fn -> fn -> * -> fn... -> boolean
+    return function (recChecks, varCheck) {
+      var args = utils.slice(arguments, 2);
+      return check.apply(undefined, args);
     };
   } else if (recNames && utils.contains(recNames, parsed.name)) {
+    // compiledRec :: map fn -> fn -> * -> boolean
     return function (recChecks, varCheck, arg) {
       return recChecks[parsed.name](recChecks, varCheck, arg);
     };
@@ -276,10 +311,20 @@ function compileVar(environment, context, recNames, parsed) {
   }
 }
 
+// :: Environment -> map (array checkable) -> array string -> checkablePoly -> fn
 function compilePoly(environment, context, recNames, parsed) {
-  if (environment.has(parsed.name)) {
+  var args = utils.map(parsed.args, compileCheckableTypeRecursive.bind(undefined, environment, context, recNames));
+  if (utils.has(context, parsed.name)) {
+    // compiledPoly :: map fn -> fn -> * -> boolean
+    return function compiledPolyEnv(recChecks, varCheck, arg) {
+      var argsChecks = args.map(function (argCheck) {
+        return argCheck.bind(undefined, recChecks, varCheck);
+      });
+      return varCheck.apply(undefined, [parsed.name, arg].concat(argsChecks));
+    };
+  } else if (environment.has(parsed.name)) {
     var polyCheck = environment.get(parsed.name);
-    var args = parsed.args.map(compileCheckableTypeRecursive.bind(undefined, environment, context, recNames));
+    // compiledPoly :: map fn -> fn -> * -> boolean
     return function (recChecks, varCheck, arg) {
       var argsChecks = args.map(function (argCheck) {
         return argCheck.bind(undefined, recChecks, varCheck);
@@ -291,31 +336,38 @@ function compilePoly(environment, context, recNames, parsed) {
   }
 }
 
+// :: Environment -> map (array checkable) -> array string -> checkableOpt -> fn
 function compileOpt(environment, context, recNames, parsed) {
   var c = compileCheckableTypeRecursive(environment, context, recNames, parsed.term);
+  // compiledOpt :: map fn -> fn -> * -> boolean
   return function (recChecks, varCheck, arg) {
     return arg === undefined || c(recChecks, varCheck, arg);
   };
 }
 
+// :: Environment -> map (array checkable) -> array string -> checkableLiteral -> fn
 function compileLiteral(environment, context, recNames, parsed) {
   if (parsed.value !== parsed.value) {
     // NaN
+    // compiledNaN :: map fn -> fn -> * -> boolean
     return function (recChecks, varCheck, arg) {
       return arg !== arg;
     };
   } else {
+    // compiledLiteral :: map fn -> fn -> * -> boolean
     return function (recChecks, varCheck, arg) {
       return arg === parsed.value;
     };
   }
 }
 
+// :: Environment -> map (array checkable) -> array string -> checkableRecord -> fn
 function compileRecord(environment, context, recNames, parsed) {
   var fields = {};
   for (var name in parsed.fields) {
     fields[name] = compileCheckableTypeRecursive(environment, context, recNames, parsed.fields[name]);
   }
+  // compiledRecord : map fn -> fn -> * -> boolean
   return function (recChecks, varCheck, arg) {
     if (!p.isObject(arg)) {
       return false;
@@ -331,18 +383,21 @@ function compileRecord(environment, context, recNames, parsed) {
   };
 }
 
+// :: Environment -> map (array checkable) -> array string -> checkableUser -> fn
 function compileUser(environment, context, recNames, parsed) {
+  // compiledUser :: map fn -> fn -> * -> boolean
   return function (recChecks, varCheck, arg) {
     return parsed.predicate(arg);
   };
 }
 
+// :: Environment -> map (array checkable) -> array string -> checkable -> fn
 function compileCheckableTypeRecursive(environment, context, recNames, parsed) {
   switch (parsed.type) {
     case "var": return compileVar(environment, context, recNames, parsed);
     case "literal": return compileLiteral(environment, context, recNames, parsed);
     case "poly": return compilePoly(environment, context, recNames, parsed);
-    case "any": return constTrue;
+    case "any": return p.constTrue;
     case "opt": return compileOpt(environment, context, recNames, parsed);
     case "alt": return compileAndAlt(environment, context, recNames, parsed, "some");
     case "and": return compileAndAlt(environment, context, recNames, parsed, "every");
@@ -351,8 +406,9 @@ function compileCheckableTypeRecursive(environment, context, recNames, parsed) {
   }
 }
 
+// :: Environment -> map (array checkable) -> checkable -> nat? -> (array checkable)? -> fn
 function compileCheckableType(environment, context, parsed) {
-  return compileCheckableTypeRecursive(environment, context, undefined, parsed).bind(undefined, undefined);
+  return compileCheckableTypeRecursive(environment, context, [], parsed).bind(undefined, {});
 }
 
 module.exports = {
@@ -368,6 +424,24 @@ var assert = require("assert");
 
 var any = { type: "any" };
 
+/*
+  typify: adt checkable
+    checkableAny:     { type: 'any' }
+    checkableLiteral: { type: 'literal', value: string|number|boolean|null|undefined|nan }
+    checkableVar:     { type: 'var', name: string }
+    checkableRecord:  { type: 'record', fields: map checkable }
+    checkablePoly:    { type: 'poly', name: string, args: array checkable }
+    checkableAlt:     { type: 'alt', options: array checkable }
+    checkableAnd:     { type: 'and', options: array checkable }
+    checkableOpt:     { type: 'opt', term: checkable }
+    checkableUser:    { type: 'user', predicate: fn }
+*/
+
+// typify: type contextDef = { name: string, typeset: array checkable }
+// typify: type context = map (array checkable)
+// typify: type functionType = { name: string, context: context, params: array checkable, rest: checkable?, result: checkable }
+
+// :: string -> { type: 'literal', value: null|boolean|infinity|ninfinity|undefined|nan } | checkableVar
 function variable(name) {
   switch (name) {
     case "true": return { type: "literal", value: true };
@@ -381,16 +455,19 @@ function variable(name) {
   return { type: "var", name: name };
 }
 
+// :: number -> { type: 'literal', value: number }
 function number(value) {
   assert(typeof value === "number");
   return { type: "literal", value: value };
 }
 
+// :: string -> { type: 'literal', value: string }
 function string(value) {
   assert(typeof value === "string");
   return { type: "literal", value: value };
 }
 
+// :: checkable -> checkableOpt | checkableAny
 function opt(t) {
   if (t.type === "any") {
     return t;
@@ -401,14 +478,17 @@ function opt(t) {
   }
 }
 
+// :: string -> array checkable -> checkablePoly
 function poly(name, args) {
   return { type: "poly", name: name, args: args };
 }
 
+// :: map checkable -> checkableRecord
 function record(fields) {
   return { type: "record", fields: fields };
 }
 
+// :: 'and'|'alt' -> checkable -> checkable -> checkable | array checkable
 function mergeOptions(type, a, b) {
   if (a.type === type) {
     if (b.type === type) {
@@ -425,6 +505,7 @@ function mergeOptions(type, a, b) {
   }
 }
 
+// :: 'and'|'alt' -> array checkable -> checkable
 function andOr(type, options) {
   assert(options.length > 0);
 
@@ -440,6 +521,7 @@ function andOr(type, options) {
   });
 }
 
+// :: fn -> checkableUser
 function user(predicate) {
   return { type: "user", predicate: predicate };
 }
@@ -467,20 +549,24 @@ var identifierRe = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 var numberRe = /^[0-9]+$/;
 var stringRe = /^('[^']*'|"[^"]*")$/;
 
+// :: string -> boolean
 function isIdentifier(token) {
   return identifierRe.test(token);
 }
 
+// :: string -> boolean
 function isNumber(token) {
   return numberRe.test(token);
 }
 
+// :: string -> boolean
 function isString(token) {
   return stringRe.test(token);
 }
 
 var altP;
 
+// :: * -> fn
 function parensP(p) {
   return A.lift(A.token("("), p, A.token(")"), function(a, b, c) {
     return b;
@@ -550,6 +636,7 @@ var checkableP = altP;
 var checkableTypeCheckRe = /^([a-zA-Z_][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|[0-9]+|:|,|\{|\}|\*|\?|\||&|\(|\)|\s+)*$/;
 var checkableTypeTokenRe = /([a-zA-Z_][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|[0-9]+|:|,|\{|\}|\*|\?|\||&|\(|\))/g;
 
+// :: string -> checkable
 function parseCheckableType(type) {
    if (!checkableTypeCheckRe.test(type)) { throw new TypeError("invalid checkable type: " + type); }
   var tokens = type.match(checkableTypeTokenRe);
@@ -634,52 +721,74 @@ module.exports = {
 "use strict";
 
 // Type predicates
+
+// :: * -> boolean
 function isBoolean(val) {
   return typeof val === "boolean";
 }
 
+// :: * -> boolean
 function isNumber(val) {
   return typeof val === "number";
 }
 
+// :: * -> boolean
 function isInteger(val) {
   return val === (val|0);
 }
 
+// :: * -> boolean
 function isPositive(val) {
   return typeof val === "number" && val > 0;
 }
 
+// :: * -> boolean
 function isNonNegative(val) {
   return typeof val === "number" && val >= 0;
 }
 
+// :: * -> boolean
 function isFinite(val) {
   return typeof val === "number" && val !== Infinity && val !== -Infinity && val === +val;
 }
 
+// :: * -> boolean
 function isString(val) {
   return typeof val === "string";
 }
 
+// :: * -> boolean
 function isFunction(val) {
   return typeof val === "function";
 }
 
+// :: * -> boolean
 function isDate(val) {
   return val instanceof Date;
 }
 
+// :: * -> boolean
 function isRegExp(val) {
   return val instanceof RegExp;
 }
 
+// :: * -> boolean
 function isArray(val) {
   return Array.isArray(val);
 }
 
+// :: * -> boolean
 function isObject(val) {
   return Object(val) === val;
+}
+
+function isArguments(val) {
+  return val && isObject(arguments) && isInteger(val.length) && Object.prototype.toString.call(val) === "[object Arguments]" || false;
+}
+
+// :: *... -> true
+function constTrue() {
+  return true;
 }
 
 module.exports = {
@@ -695,11 +804,16 @@ module.exports = {
   isRegExp: isRegExp,
   isArray: isArray,
   isObject: isObject,
+  isArguments: isArguments,
+  constTrue: constTrue,
 };
 
 },{}],8:[function(require,module,exports){
 "use strict";
 
+var utils = require("./utils.js");
+
+// :: boolean -> string -> string
 function parensS(guard, str) {
   return guard ? "(" + str + ")" : str;
 }
@@ -707,6 +821,7 @@ function parensS(guard, str) {
 // Forward declaration
 var showCheckableTypePrecedence;
 
+// :: checkableLiteral -> string
 function showLiteral(type) {
   if (typeof type.value === "string") {
     return "'" + type.value + "'";
@@ -715,14 +830,16 @@ function showLiteral(type) {
   }
 }
 
+// :: checkableRecord -> string
 function showRecord(type) {
-    var pairs = [];
-    for (var t in type.fields) {
-      pairs.push(t + ": " + showCheckableTypePrecedence(0, type.fields[t]));
-    }
-    return "{" + pairs.join(", ") + "}";
+  var pairs = [];
+  for (var t in type.fields) {
+    pairs.push(t + ": " + showCheckableTypePrecedence(0, type.fields[t]));
+  }
+  return "{" + pairs.join(", ") + "}";
 }
 
+// :: nat -> checkable -> string
 function showCheckableTypePrecedence(precedence, type) {
   switch (type.type) {
     case "any": return "*";
@@ -732,38 +849,39 @@ function showCheckableTypePrecedence(precedence, type) {
       return showRecord(type);
     case "alt":
       return parensS(precedence > 0,
-        type.options.map(showCheckableTypePrecedence.bind(undefined, 0)).join("|"));
+        utils.map(type.options, showCheckableTypePrecedence.bind(undefined, 0)).join("|"));
     case "and":
       return parensS(precedence > 1,
-        type.options.map(showCheckableTypePrecedence.bind(undefined, 1)).join("&"));
+        utils.map(type.options, showCheckableTypePrecedence.bind(undefined, 1)).join("&"));
     case "poly":
       return parensS(precedence > 2,
-        type.name + " " + type.args.map(showCheckableTypePrecedence.bind(undefined, 3)).join(" "));
+        type.name + " " + utils.map(type.args, showCheckableTypePrecedence.bind(undefined, 3)).join(" "));
     case "opt":
       return parensS(precedence > 3,
         showCheckableTypePrecedence(3, type.term) + "?");
   }
 }
 
+// :: checkable -> string
 function showCheckableType(type) {
   return showCheckableTypePrecedence(0, type);
 }
 
+// :: map (array checkable) -> string
 function showContext(context) {
   var res = "";
   for (var name in context) {
-    res += name + " : " + context[name].map(showCheckableTypePrecedence.bind(undefined, 1)).join(" | ");
+    res += name + " : " + utils.map(context[name], showCheckableTypePrecedence.bind(undefined, 1)).join(" | ");
   }
   return res;
 }
-
 
 module.exports = {
   checkable: showCheckableType,
   context: showContext,
 };
 
-},{}],9:[function(require,module,exports){
+},{"./utils.js":10}],9:[function(require,module,exports){
 /*
 * typify
 * https://github.com/phadej/typify
@@ -773,7 +891,7 @@ module.exports = {
 */
 "use strict";
 
-var VERSION = [0, 2, 3];
+var VERSION = [0, 2, 4];
 
 var utils = require("./utils.js");
 var p = require("./predicates.js");
@@ -787,8 +905,9 @@ var compileCheckableTypeRecursive = c.compileRecursive;
 var functionP = require("./functionParser.js").functionP;
 
 // Few almost predicates
-function constFalse() {
-  return false;
+// :: *... -> *
+function throwAlways() {
+  throw new Error("this shouldn't been called");
 }
 
 var functionTypeCheckRe = /^([a-zA-Z_][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|[0-9]+|\*|\?|\||&|\(|\)|\{|\}|::|:|,|=>|->|\.\.\.|\s+)*$/;
@@ -796,6 +915,7 @@ var functionTypeTokenRe = /([a-zA-Z_][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|[0-9]+|\*|\?|
 
 // Function type parsing, checks pre-compiling & pretty-printing
 
+// :: checkable -> *... -> boolean
 function optional(parsed) {
   if (parsed.type === "any") { return true; }
   if (parsed.type === "opt") { return true; }
@@ -803,10 +923,12 @@ function optional(parsed) {
   return false;
 }
 
+// :: functionType -> nat | infinity
 function maxParamsF(parsed) {
   return parsed.rest === undefined ? parsed.params.length : Infinity;
 }
 
+// :: functionType -> nat
 function minParamsF(parsed) {
   var result = parsed.params.length;
   for (var i = result - 1; i >= 0; i--) {
@@ -818,16 +940,15 @@ function minParamsF(parsed) {
   return result;
 }
 
+// :: Environment -> map (array checkable) -> map (array fn)
 function compileContext(environment, context) {
-  var res = {};
-  for (var varname in context) {
-    res[varname] = context[varname].map(compileCheckableType.bind(undefined, environment, context));
-  }
-  return res;
+  return utils.mapValues(context, function (v) {
+    return v.map(compileCheckableType.bind(undefined, environment, context));
+  });
 }
 
+// :: string -> functionType
 function parseFunctionType(type) {
-  if (!p.isString(type)) { throw new TypeError("signature should be string"); }
   if (!functionTypeCheckRe.test(type)) { throw new TypeError("invalid function type: " + type); }
   var tokens = type.match(functionTypeTokenRe);
   var parsed = A.parse(functionP, tokens);
@@ -835,6 +956,7 @@ function parseFunctionType(type) {
   return parsed;
 }
 
+// :: Environment -> functionType -> *
 function compileFunctionType(environment, parsed) {
   return {
     name: parsed.name,
@@ -847,22 +969,20 @@ function compileFunctionType(environment, parsed) {
   };
 }
 
-function contextCheckGeneric(context, varname, arg) {
+// :: map (array fn) -> fn -> string -> *... ->  boolean
+function contextCheckGeneric(context, compiled, varname) {
   var options = context[varname];
-  // console.log("contextCheckTemplate", context, varname, options, arg);
-  if (Array.isArray(options)) {
-    for (var i = 0; i < options.length; i++) {
-      var option = options[i];
-      var res = option(context, arg);
-      if (res) {
-        context[varname] = option;
-        return true;
-      }
+  var args = utils.slice(arguments, 3);
+
+  for (var i = 0; i < options.length; i++) {
+    var option = options[i];
+    var res = option.apply(undefined, [compiled].concat(args));
+    if (res) {
+      context[varname] = [option];
+      return true;
     }
-    return false;
-  } else {
-    return options(context, arg);
   }
+  return false;
 }
 
 // Decorate function with type-signature check
@@ -880,7 +1000,8 @@ function decorate(environment, type, method) {
       }
     }
 
-    var contextCheck = contextCheckGeneric.bind(undefined, utils.copyObj(compiled.context));
+    var contextCheckUn = contextCheckGeneric.bind(undefined, utils.copyObj(compiled.context));
+    var contextCheck = utils.y(contextCheckUn);
 
     // check that parameters are of right type
     for (var i = 0; i < arguments.length; i++) {
@@ -906,6 +1027,8 @@ function decorate(environment, type, method) {
   };
 }
 
+// typify: type checkableEmbedded = string | fn | array checkableEmbedded | map checkableEmbedded
+// :: checkableEmbedded -> *... -> checkable
 function parse(definition) {
   if (p.isString(definition)) {
     return parseCheckableType(definition);
@@ -933,14 +1056,15 @@ function check(environment, type, variable) {
 
   switch (arguments.length) {
     case 2: return function (variable1) {
-      return compiled(constFalse, variable1);
+      return compiled(throwAlways, variable1);
     };
     case 3:
-      return compiled(constFalse, variable);
+      return compiled(throwAlways, variable);
   }
 }
 
 // Add single parsable type
+// :: Environment -> map checkable -> undefined
 function addParsedTypes(environment, parsed) {
   var names = Object.keys(parsed);
   names.forEach(function (name) {
@@ -949,7 +1073,7 @@ function addParsedTypes(environment, parsed) {
 
   var compiled = utils.mapValues(parsed, compileCheckableTypeRecursive.bind(undefined, environment, {}, names));
   var checks = utils.mapValues(compiled, function (check) {
-    return check.bind(undefined, compiled, constFalse);
+    return check.bind(undefined, compiled, throwAlways);
   });
 
   environment.add(checks);
@@ -995,6 +1119,8 @@ function wrap(environment, module, signatures) {
 
 var buildInTypes = require("./builtin.js");
 
+// typify: instance Environment
+// :: -> undefined
 function Environment() {
   this.types = {};
 }
@@ -1059,16 +1185,18 @@ module.exports = create();
 "use strict";
 
 // Does the object contain given key? http://underscorejs.org/#has
+// :: map -> string -> boolean
 function has(object, property) {
   return Object.prototype.hasOwnProperty.call(object, property);
 }
 
-// :: list -> * -> boolean
+// :: array -> * -> boolean
 function contains(array, element) {
   return array.indexOf(element) !== -1;
 }
 
 // Create a shallow-copied clone of the object. http://underscorejs.org/#clone
+// :: map -> map
 function copyObj(obj) {
   var res = {};
   for (var k in obj) {
@@ -1078,6 +1206,7 @@ function copyObj(obj) {
 }
 
 // Returns values of the object
+// :: map -> array
 function values(obj) {
   var res = [];
   for (var k in obj) {
@@ -1088,6 +1217,7 @@ function values(obj) {
   return res;
 }
 
+// :: map -> fn -> map
 function mapValues(obj, f) {
   var res = {};
   for (var k in obj) {
@@ -1098,12 +1228,57 @@ function mapValues(obj, f) {
   return res;
 }
 
+// :: * -> integer? -> integer? -> array
+function slice(array, n, m) {
+  return Array.prototype.slice.call(array, n, m);
+}
+
+// :: array -> fn -> array
+function map(array, f) {
+  return array.map(function (x) {
+    return f(x);
+  });
+}
+
+// This has different semantics than Array#every
+// utils.every([1, 2, 3], function (x) { return x; }); // 3
+// [1, 2, 3].every(function (x) { return x; }); // true
+// :: array -> fn -> *
+function every(array, f) {
+  var acc = true;
+  for (var i = 0; i < array.length; i++) {
+    acc = acc && f(array[i]);
+    if (!acc) {
+      return acc;
+    }
+  }
+  return acc;
+}
+
+// :: fn -> fn
+function y(f) {
+  // :: fn -> fn
+  function p(h) {
+    return function() {
+      var args = Array.prototype.slice.call(arguments);
+      return f.apply(undefined, [h(h)].concat(args));
+    };
+  }
+  return p(p);
+}
+
+// try { throw new Error(); } catch (e) { console.log(e.stack); }
+
 module.exports = {
   has: has,
   contains: contains,
   copyObj: copyObj,
   values: values,
   mapValues: mapValues,
+  slice: slice,
+  map: map,
+  every: every,
+  y: y,
 };
 
 },{}],11:[function(require,module,exports){
