@@ -219,6 +219,9 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+- 0.2.5
+    - `typify.assert`
+    - Added note about opaque type checks (`typify.type`)
 - 0.2.4
     - `arguments` built-in type
     - `any` built-in type. Like `*` but not optional
