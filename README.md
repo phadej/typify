@@ -35,7 +35,7 @@ var add = typify("sum :: a : number|string => a -> a -> a", function (a, b) {
  * We could write a more general, polymorphic function with type signature
  * `toArray :: a : *, (array a)|a -> array a`, where `*` means _any type_.
  *
- * Unfortunately any type `*` is seriously any. 
+ * Unfortunately any type `*` is seriously any.
  * Types as *typify* understands them, are more like Java's interfaces or Haskell's typeclasses.
  * Of course, we can iterate through them all, but we cannot deduce the most principal type (because it doesn't exist).
  * So eg. function signature `id :: a : *, a -> a` behaves similarly to `id :: * -> *`, which isn't strict enough.
@@ -81,6 +81,13 @@ For example `number` is checkable type, given any object you can tell if it's a 
 typify.check('number', 1); // => true
 typify.check('number', 'foobar'); // => false
 ```
+
+You could use `typify.assert` for type assertions:
+
+```javascript
+typify.check('number', 'foo'); // will throw `TypeError` exception
+```
+
 
 There are few predefined checkable types:
 
@@ -146,6 +153,9 @@ typify.type("char", function(n) {
     return typeof n === "string" && n.length === 1;
 });
 ```
+
+*Note:* opaque type checks should return `true`,
+other *truthy* values will be considered errorneous in later versions.
 
 You can give names to (recursive) compound types with `typify.alias`:
 ```javascript
