@@ -35,7 +35,7 @@
     "test": "npm run-script jshint && npm run-script mocha && npm run-script istanbul && npm run-script check-coverage && npm run-script typify"
   },
   "devDependencies": {
-    "jsverify": "~0.2.0",
+    "jsverify": "~0.3.0",
     "istanbul": "~0.2.3",
     "mocha": "~1.17.0",
     "browserify": "~3.20.0",
