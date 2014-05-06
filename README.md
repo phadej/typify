@@ -270,3 +270,10 @@ Copyright (c) 2013 Oleg Grenrus. Licensed under the BSD3 license.
 
 - [Racket - Contracts for higher-order functions](http://dl.acm.org/citation.cfm?id=581484)
 - [Typed Clojure](https://github.com/clojure/core.typed)
+- [The Ruby Type Checker](http://www.cs.umd.edu/~jfoster/papers/oops13.pdf)
+
+### Gradual typing (of existing languages)
+
+- [TypeScript](http://www.typescriptlang.org/)
+- [hack](http://hacklang.org/)
+- [Gradual typing on Wikipedia](http://en.wikipedia.org/wiki/Gradual_typing)
