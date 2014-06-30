@@ -23,7 +23,7 @@
   ],
   "main": "lib/typify",
   "engines": {
-    "node": ">= 0.8.0"
+    "node": ">= 0.10.0"
   },
   "scripts": {
     "browserify": "mkdir -p dist/ && node_modules/.bin/browserify -s jsc -o dist/typify.standalone.js ./lib/typify.js",
