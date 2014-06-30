@@ -219,6 +219,8 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+- 0.2.6
+    - Updated dependencies
 - 0.2.5
     - `typify.assert`
     - Added note about opaque type checks (`typify.type`)
