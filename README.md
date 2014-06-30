@@ -2,10 +2,10 @@
 
 > Runtime type-checking.
 
-[![Build Status](https://secure.travis-ci.org/phadej/typify.png?branch=master)](http://travis-ci.org/phadej/typify)
-[![NPM version](https://badge.fury.io/js/typify.png)](http://badge.fury.io/js/typify)
-[![Dependency Status](https://gemnasium.com/phadej/typify.png)](https://gemnasium.com/phadej/typify)
-[![Code Climate](https://codeclimate.com/github/phadej/typify.png)](https://codeclimate.com/github/phadej/typify)
+[![Build Status](https://secure.travis-ci.org/phadej/typify.svg?branch=master)](http://travis-ci.org/phadej/typify)
+[![NPM version](https://badge.fury.io/js/typify.svg)](http://badge.fury.io/js/typify)
+[![Dependency Status](https://gemnasium.com/phadej/typify.svg)](https://gemnasium.com/phadej/typify)
+[![Code Climate](https://img.shields.io/codeclimate/github/phadej/typify.svg)](https://codeclimate.com/github/phadej/typify)
 
 ## Getting Started
 
