@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Generate dist/typify.standalone.js
-npm run-script browserify
+# Generate dist/typify.standalone.js and friends
+make dist
 
 if [ -n "`git status --porcelain`" ]; then
 	echo "Error: dirty repository"
