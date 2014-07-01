@@ -26,13 +26,7 @@
     "node": ">= 0.10.0"
   },
   "scripts": {
-    "browserify": "mkdir -p dist/ && node_modules/.bin/browserify -s jsc -o dist/typify.standalone.js ./lib/typify.js",
-    "jshint": "node_modules/.bin/jshint lib test",
-    "mocha": "node_modules/.bin/mocha --reporter spec test",
-    "istanbul": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha test",
-    "check-coverage": "node_modules/.bin/istanbul check-coverage --statements -11 --branches -5 --functions -6 coverage/coverage.json",
-    "typify": "node_modules/.bin/typify -- node_modules/.bin/_mocha -c test",
-    "test": "npm run-script jshint && npm run-script mocha && npm run-script istanbul && npm run-script check-coverage && npm run-script typify"
+    "test": "make test"
   },
   "devDependencies": {
     "jsverify": "~0.3.0",
@@ -41,10 +35,14 @@
     "browserify": "~4.1.11",
     "jshint": "~2.5.1",
     "lodash": "~2.4.1",
+    "uglify-js": "~2.4.14",
     "typify-bin": "phadej/typify-bin"
   },
   "keywords": [
     "type",
-    "checking"
+    "checking",
+    "typify",
+    "data",
+    "validation"
   ]
 }
