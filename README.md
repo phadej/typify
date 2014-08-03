@@ -24,7 +24,7 @@ var typify = require("typify");
  * `sum` function takes either two numbers or two strings as a parameter,
  * and returns a number or a string respectively.
  */
-var add = typify("sum :: a : number|string => a -> a -> a", function (a, b) {
+var sum = typify("sum :: a : number|string => a -> a -> a", function (a, b) {
     return a + b;
 });
 
