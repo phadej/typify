@@ -219,6 +219,10 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+- 0.2.8
+    - Change `date` and `regexp` checks to work in multiframe environments [#34](https://github.com/phadej/typify/issues/34)
+    - Fix typo in README.md [#35](https://github.com/phadej/typify/issues/35)
+    - Update dependencies
 - 0.2.7
     - Use make
 - 0.2.6
