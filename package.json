@@ -30,9 +30,9 @@
   },
   "devDependencies": {
     "jsverify": "~0.3.0",
-    "istanbul": "~0.2.3",
-    "mocha": "~1.20.1",
-    "browserify": "~4.1.11",
+    "istanbul": "~0.3.0",
+    "mocha": "~1.21.3",
+    "browserify": "~5.9.1",
     "jshint": "~2.5.1",
     "lodash": "~2.4.1",
     "uglify-js": "~2.4.14",
