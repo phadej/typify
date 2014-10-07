@@ -17,7 +17,7 @@
   },
   "licenses": [
     {
-      "type": "BSD",
+      "type": "BSD-3-Clause",
       "url": "https://github.com/phadej/typify/blob/master/LICENSE"
     }
   ],
