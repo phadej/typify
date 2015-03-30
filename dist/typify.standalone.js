@@ -1,4 +1,4 @@
-!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.jsc=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.jsc = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
 var utils = require("./utils.js");
@@ -368,6 +368,8 @@ function compileRecord(environment, context, recNames, parsed) {
   for (var name in parsed.fields) {
     fields[name] = compileCheckableTypeRecursive(environment, context, recNames, parsed.fields[name]);
   }
+  var closed = parsed.closed;
+
   // compiledRecord : map fn -> fn -> any -> fn... -> boolean
   return function (recChecks, varCheck, arg) {
     if (!p.isObject(arg)) {
@@ -377,6 +379,14 @@ function compileRecord(environment, context, recNames, parsed) {
     for (var fieldName in fields) {
       if (!fields[fieldName](recChecks, varCheck, arg[fieldName])) {
         return false;
+      }
+    }
+
+    if (closed) {
+      for (var key in arg) {
+        if (!fields[key]) {
+          return false;
+        }
       }
     }
 
@@ -430,7 +440,7 @@ var any = { type: "any" };
     checkableAny:     { type: 'any' }
     checkableLiteral: { type: 'literal', value: string|number|boolean|null|undefined|nan }
     checkableVar:     { type: 'var', name: string }
-    checkableRecord:  { type: 'record', fields: map checkable }
+    checkableRecord:  { type: 'record', fields: map checkable, closed: boolean }
     checkablePoly:    { type: 'poly', name: string, args: array checkable }
     checkableAlt:     { type: 'alt', options: array checkable }
     checkableAnd:     { type: 'and', options: array checkable }
@@ -484,9 +494,9 @@ function poly(name, args) {
   return { type: "poly", name: name, args: args };
 }
 
-// :: map checkable -> checkableRecord
-function record(fields) {
-  return { type: "record", fields: fields };
+// :: map checkable -> boolean -> checkableRecord
+function record(fields, closed) {
+  return { type: "record", fields: fields, closed: !!closed };
 }
 
 // :: 'and'|'alt' -> checkable -> checkable -> checkable | array checkable
@@ -894,7 +904,7 @@ module.exports = {
 */
 "use strict";
 
-var VERSION = [0, 2, 8];
+var VERSION = [0, 2, 9];
 
 var utils = require("./utils.js");
 var p = require("./predicates.js");
@@ -1031,8 +1041,8 @@ function decorate(environment, type, method) {
 }
 
 // typify: type checkableEmbedded = string | fn | array checkableEmbedded | map checkableEmbedded
-// :: checkableEmbedded -> checkable
-function parse(definition) {
+// :: checkableEmbedded -> boolean? -> checkable
+function parse(definition, closed) {
   if (p.isString(definition)) {
     return parseCheckableType(definition);
   } else if (p.isFunction(definition)) {
@@ -1042,7 +1052,7 @@ function parse(definition) {
     return cons.alt(options);
   } else /* if (p.isObject(definition)) */ {
     var fields = utils.mapValues(definition, parse);
-    return cons.record(fields);
+    return cons.record(fields, closed);
   }
 }
 
@@ -1093,7 +1103,7 @@ function assert(environment, type, variable) {
 
 // Add single parsable type
 // :: Environment -> map checkable -> undefined
-function addParsedTypes(environment, parsed) {
+function addParsedTypes(environment, parsed, closed) {
   var names = Object.keys(parsed);
   names.forEach(function (name) {
     if (environment.has(name)) { throw new Error(name + " is already defined"); }
@@ -1107,9 +1117,9 @@ function addParsedTypes(environment, parsed) {
   environment.add(checks);
 }
 
-function addType(environment, name, definition) {
+function addType(environment, name, definition, closed) {
   var parsed = {};
-  parsed[name] = parse(definition);
+  parsed[name] = parse(definition, closed);
   return addParsedTypes(environment, parsed);
 }
 
@@ -1175,7 +1185,7 @@ var TYPE_SIGNATURES = {
 // TODO: support specifying required but "any" parameter
 //  check: "string -> * -> boolean",
   alias: "string -> string -> *",
-  record: "string -> map string -> *",
+  record: "string -> map string -> boolean? -> *",
   mutual: "map string -> *",
   instance: "string -> fn -> *",
   wrap: "* -> map string -> *",
@@ -1399,7 +1409,7 @@ function replacer(key, value) {
   if (util.isUndefined(value)) {
     return '' + value;
   }
-  if (util.isNumber(value) && (isNaN(value) || !isFinite(value))) {
+  if (util.isNumber(value) && !isFinite(value)) {
     return value.toString();
   }
   if (util.isFunction(value) || util.isRegExp(value)) {
@@ -1538,23 +1548,22 @@ function objEquiv(a, b) {
     return false;
   // an identical 'prototype' property.
   if (a.prototype !== b.prototype) return false;
-  //~~~I've managed to break Object.keys through screwy arguments passing.
-  //   Converting to array solves the problem.
-  if (isArguments(a)) {
-    if (!isArguments(b)) {
-      return false;
-    }
+  // if one is a primitive, the other must be same
+  if (util.isPrimitive(a) || util.isPrimitive(b)) {
+    return a === b;
+  }
+  var aIsArgs = isArguments(a),
+      bIsArgs = isArguments(b);
+  if ((aIsArgs && !bIsArgs) || (!aIsArgs && bIsArgs))
+    return false;
+  if (aIsArgs) {
     a = pSlice.call(a);
     b = pSlice.call(b);
     return _deepEqual(a, b);
   }
-  try {
-    var ka = objectKeys(a),
-        kb = objectKeys(b),
-        key, i;
-  } catch (e) {//happens when one is a string literal and the other isn't
-    return false;
-  }
+  var ka = objectKeys(a),
+      kb = objectKeys(b),
+      key, i;
   // having the same number of owned properties (keys incorporates
   // hasOwnProperty)
   if (ka.length != kb.length)
@@ -1672,14 +1681,99 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":13}],12:[function(require,module,exports){
+},{"util/":15}],12:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],13:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    draining = true;
+    var currentQueue;
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        var i = -1;
+        while (++i < len) {
+            currentQueue[i]();
+        }
+        len = queue.length;
+    }
+    draining = false;
+}
+process.nextTick = function (fun) {
+    queue.push(fun);
+    if (!draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],14:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2269,95 +2363,5 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":12,"_process":15,"inherits":14}],14:[function(require,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
-}
-
-},{}],15:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}]},{},[9])(9)
+},{"./support/isBuffer":14,"_process":13,"inherits":12}]},{},[9])(9)
 });
