@@ -29,14 +29,15 @@
     "test": "make test"
   },
   "devDependencies": {
-    "jsverify": "~0.3.0",
+    "browserify": "^9.0.3",
+    "david": "^6.1.5",
     "istanbul": "~0.3.0",
-    "mocha": "~2.0.1",
-    "browserify": "~6.2.0",
-    "jshint": "~2.5.1",
-    "lodash": "~2.4.1",
-    "uglify-js": "~2.4.14",
-    "typify-bin": "phadej/typify-bin"
+    "jshint": "^2.6.3",
+    "jsverify": "^0.6.0-alpha.4",
+    "lodash": "^3.6.0",
+    "mocha": "^2.2.1",
+    "typify-bin": "0.0.5",
+    "uglify-js": "~2.4.14"
   },
   "keywords": [
     "type",

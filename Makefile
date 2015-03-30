@@ -14,18 +14,20 @@ MINSRC=$(BUNDLEDST)
 MINDST=$(DISTDIR)/$(DISTPREFIX).min.js
 MINMAP=$(DISTDIR)/$(DISTPREFIX).min.js.map
 
-.PHONY : all test jshint mocha istanbul browserify typify dist
+.PHONY : all test jshint mocha istanbul browserify typify dist david
 
-BINDIR=node_modules/.bin/
+BINDIR=node_modules/.bin
 
-MOCHA=$(BINDIR)/_mocha
+MOCHA=$(BINDIR)/mocha
+IMOCHA=$(BINDIR)/_mocha
 ISTANBUL=$(BINDIR)/istanbul
 JSHINT=$(BINDIR)/jshint
 BROWSERIFY=$(BINDIR)/browserify
 UGLIFY=$(BINDIR)/uglifyjs
 TYPIFY=$(BINDIR)/typify
+DAVID=$(BINDIR)/david
 
-test : jshint mocha istanbul typify
+test : jshint mocha istanbul typify david
 
 jshint :
 	echo $(basename foo/bar)
@@ -35,7 +37,7 @@ mocha :
 	$(MOCHA) --reporter=spec $(TESTSRC)
 
 istanbul :
-	$(ISTANBUL) cover $(MOCHA) $(TESTSRC)
+	$(ISTANBUL) cover $(IMOCHA) $(TESTSRC)
 	$(ISTANBUL) check-coverage --statements -11 --branches -5 --functions -6
 
 browserify : $(SRC)
@@ -47,7 +49,10 @@ uglify : browserify $(SRC)
 	$(UGLIFY) -o $(MINDST) --source-map $(MINMAP) $(MINSRC)
 
 typify :
-	$(TYPIFY) $(MOCHA) $(TESTSRC)
+	$(TYPIFY) $(MOCHA) --timeout 10000 $(TESTSRC)
+
+david :
+	$(DAVID)
 
 dist : test uglify
 	git clean -fdx -e node_modules
