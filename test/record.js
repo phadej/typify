@@ -48,6 +48,32 @@ describe("records", function () {
     });
   });
 
+  describe("closed", function () {
+    var isPerson;
+
+    beforeEach(function () {
+      typ.record("person", {
+        name: "string",
+        age: "number",
+      }, true);
+      isPerson = typ.check("person");
+    });
+
+    it("is falsy for objects with missing properties", function () {
+      assert(!isPerson({}));
+      assert(!isPerson({ age: 10 }));
+      assert(!isPerson({ name: "foo" }));
+    });
+
+    it("is truthy for objects with all properties", function () {
+      assert(isPerson({ age: 10, name: "foo" }));
+    });
+
+    it("is falsy for objects with extra properties", function () {
+      assert(!isPerson({ age: 10, name: "foo", height: 175 }));
+    });
+  });
+
   describe("anonymous records", function () {
     var isPerson;
 
