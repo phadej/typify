@@ -1,7 +1,7 @@
 {
   "name": "typify",
   "description": "Runtime type-checking for JavaScript.",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "homepage": "https://github.com/phadej/typify",
   "author": {
     "name": "Oleg Grenrus",
@@ -15,12 +15,7 @@
   "bugs": {
     "url": "https://github.com/phadej/typify/issues"
   },
-  "licenses": [
-    {
-      "type": "BSD-3-Clause",
-      "url": "https://github.com/phadej/typify/blob/master/LICENSE"
-    }
-  ],
+  "license": "BSD-3-Clause",
   "main": "lib/typify",
   "engines": {
     "node": ">= 0.10.0"
@@ -29,15 +24,15 @@
     "test": "make test"
   },
   "devDependencies": {
-    "browserify": "^9.0.3",
-    "david": "^6.1.5",
-    "istanbul": "~0.3.0",
-    "jshint": "^2.6.3",
-    "jsverify": "^0.6.0-alpha.4",
-    "lodash": "^3.6.0",
-    "mocha": "^2.2.1",
+    "browserify": "^16.2.3",
+    "david": "^11.0.0",
+    "eslint": "^5.15.0",
+    "jsverify": "^0.8.4",
+    "lodash": "^4.17.11",
+    "mocha": "^6.0.2",
+    "nyc": "^13.3.0",
     "typify-bin": "0.0.5",
-    "uglify-js": "~2.4.14"
+    "uglify-js": "^3.4.9"
   },
   "keywords": [
     "type",

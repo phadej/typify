@@ -15,6 +15,7 @@ describe("records", function () {
     var isPerson;
 
     beforeEach(function () {
+      typ = typify.create();
       typ.record("person", {
         name: "string",
         age: "number",
@@ -78,6 +79,7 @@ describe("records", function () {
     var isPerson;
 
     beforeEach(function () {
+      typ = typify.create();
       typ.alias("person", "{name: string, age: number}");
       isPerson = typ.check("person");
     });
